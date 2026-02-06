@@ -193,6 +193,48 @@ La risposta suggerisce di "pagare solo la tua quota (50%)" del mutuo, ignorando 
 
 ---
 
+### System Prompt Update - Applicare Versione 2.0
+**Repo:** lexe-core (DB), lexe-docs
+**Segnalato:** 2026-02-06
+
+**Problema:**
+Il system prompt attuale non gestisce correttamente:
+1. Citazioni giurisprudenziali quando tools sono OFF
+2. Avvisi obbligatori su responsabilità solidale (mutui, fideiussioni)
+3. Comportamento esplicito quando tools non disponibili
+
+**Documenti Preparati:**
+- `lexe-docs/system-prompts/lexe-legal-assistant-CURRENT.md` - Prompt attuale estratto dal DB
+- `lexe-docs/system-prompts/lexe-legal-assistant-PROPOSED.md` - Versione 2.0 con fix
+- `lexe-docs/PROMPT-OPTIMIZATION-PROPOSAL.md` - Analisi dettagliata
+
+**Modifiche nella v2.0:**
+| Sezione | Modifica |
+|---------|----------|
+| **NUOVA: Citazioni Giurisprudenziali** | NON citare numeri sentenze senza verifica tools |
+| **NUOVA: Red Flags** | SEMPRE menzionare art. 1292 (solidarietà) per mutui |
+| **Gestione Attendibilità** | Comportamento esplicito quando tools OFF |
+| **Sintesi Iniziale** | Dichiarare stato tools nella risposta |
+
+**Azioni:**
+- [ ] Valutare modifiche proposte in `lexe-legal-assistant-PROPOSED.md`
+- [ ] Testare nuovo prompt in sandbox/staging
+- [ ] Applicare a DB con query:
+  ```sql
+  UPDATE core.responder_personas
+  SET system_prompt = '<contenuto PROPOSED>'
+  WHERE name = 'lexe-legal-assistant';
+  ```
+- [ ] Invalidare cache (restart lexe-core o endpoint dedicato)
+- [ ] Verificare comportamento con tools ON e OFF
+
+**Rischi se non implementato:**
+- Continua hallucination di citazioni Cassazione
+- Consigli errati su obbligazioni solidali
+- Perdita credibilità con studi legali
+
+---
+
 ## P1 - IMPORTANTI
 
 ### LEO References Cleanup
