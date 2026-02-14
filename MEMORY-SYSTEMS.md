@@ -2,7 +2,7 @@
 
 > Architettura, differenze e punti di forza dei due canali di retrieval
 > controllati dagli switch nel pannello destro della chat.
->
+> 
 > Ultimo aggiornamento: 2026-02-14
 
 ---
@@ -13,10 +13,10 @@ LEXE dispone di **due sistemi di memoria indipendenti**, ognuno con scopo,
 storage e ciclo di vita diversi. L'utente li controlla tramite due switch
 nel PreviewPanel della webchat:
 
-| Switch | ID | Default | Backend field | Stato |
-|--------|----|---------|---------------|-------|
-| **CONVERSAZIONALE** | `memory` | ON | `use_memory_retrieval` | Attivo |
-| **SEMANTICA** | `ragV3` | OFF | `use_rag_v3_retrieval` | Coming Soon |
+| Switch              | ID       | Default | Backend field          | Stato       |
+| ------------------- | -------- | ------- | ---------------------- | ----------- |
+| **CONVERSAZIONALE** | `memory` | ON      | `use_memory_retrieval` | Attivo      |
+| **SEMANTICA**       | `ragV3`  | OFF     | `use_rag_v3_retrieval` | Coming Soon |
 
 Entrambi i toggle sono persistiti in `localStorage` (sopravvivono al
 reload) e trasmessi al backend come campi di `CustomerStreamRequest`.
@@ -62,13 +62,13 @@ done event SSE include memory_status: "retrieved" | "empty" | "skipped"
 
 ### I 5 livelli di memoria (L0-L4)
 
-| Layer | Nome | Storage | TTL | Scopo |
-|-------|------|---------|-----|-------|
-| **L0** | Session | Valkey (Redis) | 24h | Contesto sessione corrente, volatilissimo |
-| **L1** | Working | Valkey + PostgreSQL | 7 giorni | Memoria di lavoro, importanza dinamica con decay esponenziale |
-| **L2** | Episodic | PostgreSQL | 90 giorni | Fatti e decisioni consolidate da L0/L1 |
-| **L3** | Semantic | PostgreSQL + pgvector | Permanente | Fatti semantici con embedding vettoriale (1536 dim) |
-| **L4** | Graph | Apache AGE (PostgreSQL) | Permanente | Knowledge graph con nodi ed archi (Cypher) |
+| Layer  | Nome     | Storage                 | TTL        | Scopo                                                         |
+| ------ | -------- | ----------------------- | ---------- | ------------------------------------------------------------- |
+| **L0** | Session  | Valkey (Redis)          | 24h        | Contesto sessione corrente, volatilissimo                     |
+| **L1** | Working  | Valkey + PostgreSQL     | 7 giorni   | Memoria di lavoro, importanza dinamica con decay esponenziale |
+| **L2** | Episodic | PostgreSQL              | 90 giorni  | Fatti e decisioni consolidate da L0/L1                        |
+| **L3** | Semantic | PostgreSQL + pgvector   | Permanente | Fatti semantici con embedding vettoriale (1536 dim)           |
+| **L4** | Graph    | Apache AGE (PostgreSQL) | Permanente | Knowledge graph con nodi ed archi (Cypher)                    |
 
 ### Pregi
 
@@ -138,18 +138,18 @@ LLM genera risposta con contesto conversazionale arricchito
 
 ### Componenti implementati in lexe-memory
 
-| Componente | File | LOC | Stato |
-|------------|------|-----|-------|
-| API Router | `rag/api/router.py` | 523 | Implementato, feature-flagged |
-| Ricerca ibrida | `rag/search.py` | 518 | Implementato (RRF fusion) |
-| Repository DB | `rag/repository.py` | 910 | Implementato con RLS |
-| Chunking | `rag/chunking.py` | 486 | Implementato (structure-aware) |
-| Embeddings | `rag/embeddings.py` | 361 | Implementato (LiteLLM batch) |
-| Query rewriting | `rag/rewriter.py` | 421 | P1, gated |
-| Cross-encoder reranking | `rag/reranker.py` | 369 | P1, gated |
-| Importance scoring | `rag/importance.py` | 350 | Euristico + LLM (P1) |
-| Conversation summary | `rag/summary.py` | 442 | P1, gated |
-| Schemas Pydantic | `rag/schemas.py` | 258 | Completo |
+| Componente              | File                | LOC | Stato                          |
+| ----------------------- | ------------------- | --- | ------------------------------ |
+| API Router              | `rag/api/router.py` | 523 | Implementato, feature-flagged  |
+| Ricerca ibrida          | `rag/search.py`     | 518 | Implementato (RRF fusion)      |
+| Repository DB           | `rag/repository.py` | 910 | Implementato con RLS           |
+| Chunking                | `rag/chunking.py`   | 486 | Implementato (structure-aware) |
+| Embeddings              | `rag/embeddings.py` | 361 | Implementato (LiteLLM batch)   |
+| Query rewriting         | `rag/rewriter.py`   | 421 | P1, gated                      |
+| Cross-encoder reranking | `rag/reranker.py`   | 369 | P1, gated                      |
+| Importance scoring      | `rag/importance.py` | 350 | Euristico + LLM (P1)           |
+| Conversation summary    | `rag/summary.py`    | 442 | P1, gated                      |
+| Schemas Pydantic        | `rag/schemas.py`    | 258 | Completo                       |
 
 ### Pregi (rispetto a una semplice finestra di messaggi)
 
@@ -187,23 +187,23 @@ LLM genera risposta con contesto conversazionale arricchito
 
 ## Confronto diretto
 
-| Aspetto | CONVERSAZIONALE | SEMANTICA (RAG v3) |
-|---------|-----------------|-------------------|
-| **Domanda a cui risponde** | "Cosa so di questo utente?" | "Cosa e' stato detto in questa conversazione?" |
-| **Scope** | Cross-conversazione (permanente) | Intra-conversazione (per thread) |
-| **Dati memorizzati** | Fatti semantici (nome, preferenze) | Messaggi completi (user + assistant) |
-| **Storage** | `memory.semantic_vectors` | `rag.chunks` + `rag.embeddings` |
-| **Database** | lexe-postgres:5435, schema `memory` | lexe-postgres:5435, schema `rag` |
-| **Embedding model** | text-embedding-3-small (1536d) | qwen3-embedding (1536d) |
-| **Metodo di ricerca** | Dense only (HNSW cosine) | Ibrido RRF (dense + sparse BM25) |
-| **Reranking** | No | Si (cross-encoder, P1) |
-| **Query rewriting** | No | Si (rule-based + LLM, P1) |
-| **Retention** | Permanente (L3) | Configurabile (default 180 giorni) |
-| **Granularita'** | Fatto singolo ("si chiama Mario") | Messaggio + contesto adiacente |
-| **Isolamento** | `tenant_id` + `contact_id` (applicativo) | `tenant_id` + `conversation_id` (RLS) |
-| **Injection nel prompt** | `## Memoria dell'utente` | Contesto conversazionale formattato |
-| **Latenza** | ~5ms (HNSW index) | ~20-50ms (hybrid + rerank) |
-| **Stato** | Attivo in produzione | Implementato, non integrato |
+| Aspetto                    | CONVERSAZIONALE                          | SEMANTICA (RAG v3)                             |
+| -------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| **Domanda a cui risponde** | "Cosa so di questo utente?"              | "Cosa e' stato detto in questa conversazione?" |
+| **Scope**                  | Cross-conversazione (permanente)         | Intra-conversazione (per thread)               |
+| **Dati memorizzati**       | Fatti semantici (nome, preferenze)       | Messaggi completi (user + assistant)           |
+| **Storage**                | `memory.semantic_vectors`                | `rag.chunks` + `rag.embeddings`                |
+| **Database**               | lexe-postgres:5435, schema `memory`      | lexe-postgres:5435, schema `rag`               |
+| **Embedding model**        | text-embedding-3-small (1536d)           | qwen3-embedding (1536d)                        |
+| **Metodo di ricerca**      | Dense only (HNSW cosine)                 | Ibrido RRF (dense + sparse BM25)               |
+| **Reranking**              | No                                       | Si (cross-encoder, P1)                         |
+| **Query rewriting**        | No                                       | Si (rule-based + LLM, P1)                      |
+| **Retention**              | Permanente (L3)                          | Configurabile (default 180 giorni)             |
+| **Granularita'**           | Fatto singolo ("si chiama Mario")        | Messaggio + contesto adiacente                 |
+| **Isolamento**             | `tenant_id` + `contact_id` (applicativo) | `tenant_id` + `conversation_id` (RLS)          |
+| **Injection nel prompt**   | `## Memoria dell'utente`                 | Contesto conversazionale formattato            |
+| **Latenza**                | ~5ms (HNSW index)                        | ~20-50ms (hybrid + rerank)                     |
+| **Stato**                  | Attivo in produzione                     | Implementato, non integrato                    |
 
 ---
 
@@ -212,11 +212,13 @@ LLM genera risposta con contesto conversazionale arricchito
 ### Memoria CONVERSAZIONALE (switch ON di default)
 
 L'utente la vuole attiva quando:
+
 - Vuole che l'AI ricordi il suo nome e le sue preferenze tra sessioni diverse
 - Vuole personalizzazione persistente ("ricordati che preferisco risposte brevi")
 - Vuole che informazioni personali influenzino le risposte future
 
 L'utente la disattiva quando:
+
 - Sta facendo una ricerca anonima/impersonale
 - Non vuole che fatti vengano estratti e memorizzati
 - Sta testando il sistema senza contesto pregresso
@@ -224,11 +226,13 @@ L'utente la disattiva quando:
 ### Memoria SEMANTICA / RAG v3 (switch OFF, coming soon)
 
 L'utente la vorra' attiva quando:
+
 - La conversazione e' lunga e il contesto delle ultime N messages non basta
 - Ha discusso un articolo specifico 50 messaggi fa e vuole richiamarlo
 - Vuole che l'AI trovi connessioni tra parti distanti della conversazione
 
 L'utente la terra' disattivata quando:
+
 - La conversazione e' breve (< 20 messaggi)
 - Vuole risposte piu' veloci (il retrieval ibrido aggiunge latenza)
 - Il contesto dei 10 messaggi recenti e' sufficiente
@@ -272,32 +276,32 @@ L'utente la terra' disattivata quando:
 
 ### Memoria CONVERSAZIONALE
 
-| File | Descrizione |
-|------|-------------|
+| File                                                 | Descrizione                                        |
+| ---------------------------------------------------- | -------------------------------------------------- |
 | `lexe-core/src/lexe_core/gateway/customer_router.py` | Orchestrazione retrieve + store nel QUICK FIX path |
-| `lexe-memory/src/lexe_memory/service.py` | MemoryService: routing L0-L4 |
-| `lexe-memory/src/lexe_memory/layers/l3_semantic.py` | L3: pgvector search + dedup |
-| `lexe-memory/src/lexe_memory/api/routes.py` | API `/memory/store`, `/memory/search` |
-| `lexe-memory/src/lexe_memory/models/memory.py` | Contratti V2.1, scope, retention |
+| `lexe-memory/src/lexe_memory/service.py`             | MemoryService: routing L0-L4                       |
+| `lexe-memory/src/lexe_memory/layers/l3_semantic.py`  | L3: pgvector search + dedup                        |
+| `lexe-memory/src/lexe_memory/api/routes.py`          | API `/memory/store`, `/memory/search`              |
+| `lexe-memory/src/lexe_memory/models/memory.py`       | Contratti V2.1, scope, retention                   |
 
 ### Memoria SEMANTICA (RAG v3)
 
-| File | Descrizione |
-|------|-------------|
+| File                                            | Descrizione                                       |
+| ----------------------------------------------- | ------------------------------------------------- |
 | `lexe-memory/src/lexe_memory/rag/api/router.py` | API `/rag/index`, `/rag/retrieve`, `/rag/context` |
-| `lexe-memory/src/lexe_memory/rag/search.py` | Orchestrazione ricerca ibrida RRF |
-| `lexe-memory/src/lexe_memory/rag/chunking.py` | Chunking structure-aware + importance |
-| `lexe-memory/src/lexe_memory/rag/repository.py` | Database layer con RLS |
-| `lexe-memory/src/lexe_memory/rag/rewriter.py` | Query rewriting (P1) |
-| `lexe-memory/src/lexe_memory/rag/reranker.py` | Cross-encoder reranking (P1) |
+| `lexe-memory/src/lexe_memory/rag/search.py`     | Orchestrazione ricerca ibrida RRF                 |
+| `lexe-memory/src/lexe_memory/rag/chunking.py`   | Chunking structure-aware + importance             |
+| `lexe-memory/src/lexe_memory/rag/repository.py` | Database layer con RLS                            |
+| `lexe-memory/src/lexe_memory/rag/rewriter.py`   | Query rewriting (P1)                              |
+| `lexe-memory/src/lexe_memory/rag/reranker.py`   | Cross-encoder reranking (P1)                      |
 
 ### Frontend
 
-| File | Descrizione |
-|------|-------------|
-| `lexe-webchat/src/components/ui/RetrievalToggleBar.tsx` | I due switch con "Coming Soon" |
-| `lexe-webchat/src/stores/configStore.ts` | Persistenza toggle in localStorage |
-| `lexe-webchat/src/hooks/useStreaming.ts` | Invio toggle nel body della POST |
+| File                                                    | Descrizione                        |
+| ------------------------------------------------------- | ---------------------------------- |
+| `lexe-webchat/src/components/ui/RetrievalToggleBar.tsx` | I due switch con "Coming Soon"     |
+| `lexe-webchat/src/stores/configStore.ts`                | Persistenza toggle in localStorage |
+| `lexe-webchat/src/hooks/useStreaming.ts`                | Invio toggle nel body della POST   |
 
 ---
 
