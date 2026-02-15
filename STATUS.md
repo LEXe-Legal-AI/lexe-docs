@@ -90,7 +90,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up -d
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `core`   | tenants, contacts, conversations, conversation_messages, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions | Multi-tenant con RLS |
-| `memory` | memories                                                                                                                                                                                                                                                                                                                                                                                                                                           | pgvector 1536d       |
+| `memory` | memories, semantic_vectors, episodic_vectors, working_memories, profiles, profile_facts, fact_history                                                                                                                                                                                                                                                                                                                                                  | pgvector 1536d       |
 
 ### lexe-max (KB Legal)
 
@@ -172,17 +172,60 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
 | Organization | lexe-default-stage                   |
 | Tenant UUID  | 67a08dc0-4677-423d-b962-f890c6d6b5a9 |
 
+### lexe-memory Sprint 1: Router Mounting + Security (2026-02-14)
+
+- [x] Tutti i router registrati in main.py (delta, profile, context, rag, routes, gateway)
+- [x] Rate limiting su tutti gli endpoint (100/min default, 20/min su store/search)
+- [x] X-Tenant-ID header validation
+- [x] try/except per import opzionali (profile, rag) — graceful degradation
+- [x] `GET /openapi.json` espone tutti i 40+ endpoint
+- [x] Health checks L0-L4 in /health response
+
+### lexe-memory Sprint 2: Delta Writeback L0/L1 (2026-02-15)
+
+- [x] `apply_delta()`: writeback reale su L0 (session) e L1 (persistent)
+  - `sync_l0_only` + conversation_id → facts in L0
+  - `sync_l0_only` senza conversation → facts in L1
+  - `async_full` → facts in L0 **e** L1
+  - Preferences → sempre L1
+- [x] Anti-feedback loop: blocca contenuto negativo (20 pattern IT/EN/PT)
+- [x] Idempotency tracking via request_id (OrderedDict bounded 10k)
+- [x] `get_by_request_id()`: delta status da idempotency cache
+- [x] `get_summary()`: template-based da L1+L2 (no LLM, Sprint 4)
+- [x] `get_resolution_log()`: log ADD/DELETE con cursor pagination
+- [x] Intelligence metrics: facts_analyzed, facts_blocked, deltas_tracked
+- [x] 25 unit tests (mock MemoryService, no DB)
+
+### lexe-memory Sprint 3: Brainprint Profile (2026-02-14)
+
+- [x] Migration 004: `memory.profiles`, `memory.profile_facts`, `memory.fact_history`
+  - Unique partial index `(profile_id, key) WHERE is_valid = true` per dedup
+  - Trigger `set_updated_at()` automatico
+  - `tenant_id` su tutte e 3 le tabelle (RLS-ready)
+- [x] `profile/schemas.py`: 12 Pydantic v2 models (ProfileResponse, FactCandidate, ExtractionInput, ...)
+- [x] `profile/service.py`: ProfileService con dedup key-based
+  - get_profile (NO auto-create), get_or_create_profile, add_fact (confirm/supersede/keep)
+  - update_fact, invalidate_fact, get_profile_summary (template), get_profile_history
+- [x] `profile/extractor.py`: FactExtractionProvider protocol
+  - HeuristicExtractor: 12 regex IT/EN/PT, confidence scoring, uncertainty penalty
+  - LLMExtractor: via LiteLLM `lexe-fast`, JSON strict + whitelist, OFF by default
+  - ALLOWED_KEYS whitelist per 5 categorie (identity, preference, relation, context, behavior)
+- [x] `profile/evolver.py`: orchestra extraction → persistence via add_fact()
+- [x] Config: 8 nuovi settings per fact extractor
+- [x] 23 unit tests (HeuristicExtractor, schemas, factory)
+- [x] E2E su staging: 404 (no auto-create) → 201 (add_fact) → confirm → supersede → history
+
 ---
 
 ## In Progress
 
 ### Admin Panel Frontend (Task #6)
 
-- [ ] Scaffolding React app (lexe-admin)
-- [ ] Dashboard con metriche conversazioni
-- [ ] CRUD Personas
-- [ ] Gestione utenti/ruoli
-- [ ] Audit log viewer
+- [x] Scaffolding React (in lexe-webchat, non repo separato)
+- [x] Dashboard con 10 sezioni, 27 componenti
+- [x] CRUD Personas
+- [x] Gestione utenti/ruoli
+- [x] Audit log viewer
 - [ ] Configurazione modelli LLM per tenant
 
 ---
@@ -237,4 +280,4 @@ Il tool (`normattiva.py`) usa `CODICI_PREDEFINITI[code]["urn_annex"]` per inseri
 
 ---
 
-*Ultimo aggiornamento: 2026-02-13*
+*Ultimo aggiornamento: 2026-02-15*

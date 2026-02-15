@@ -3,7 +3,7 @@
 > Architettura, differenze e punti di forza dei due canali di retrieval
 > controllati dagli switch nel pannello destro della chat.
 > 
-> Ultimo aggiornamento: 2026-02-14
+> Ultimo aggiornamento: 2026-02-15
 
 ---
 
@@ -90,13 +90,17 @@ done event SSE include memory_status: "retrieved" | "empty" | "skipped"
 
 ### Limitazioni attuali
 
-- **Estrazione primitiva**: Solo regex (`mi chiamo X`), nessun LLM-based
-  fact extraction — cattura solo nomi, non preferenze complesse
-- **Solo L3 usato dal QUICK FIX path**: L0/L1/L2/L4 esistono nel servizio ma
-  `customer_router.py` interroga solo L3 semantic search
-- **Router non registrati**: `delta.py`, `profile.py`, `context.py` definiti
-  in lexe-memory ma non esposti in `main.py`
+- **Estrazione primitiva** (parzialmente risolto): HeuristicExtractor con 12 regex
+  IT/EN/PT cattura nomi, ruoli, organizzazioni, settore legale. LLMExtractor
+  implementato ma OFF di default (`ff_fact_extractor_llm=False`)
+- **Solo L3 usato dal QUICK FIX path** (parzialmente risolto): L0/L1 ora attivi
+  via `apply_delta()` (Sprint 2). `customer_router.py` interroga ancora solo L3,
+  ma la pipeline delta scrive su L0/L1 per facts e preferences
+- ~~**Router non registrati**~~: **RISOLTO** (Sprint 1) — tutti i router montati
+  in `main.py` con graceful degradation per import opzionali
 - **RLS policies mancanti**: Isolation applicativa, non a livello PostgreSQL
+  (le tabelle `memory.profiles/profile_facts/fact_history` sono RLS-ready con
+  `tenant_id` su ogni tabella, policy da attivare in Sprint 4)
 
 ---
 
