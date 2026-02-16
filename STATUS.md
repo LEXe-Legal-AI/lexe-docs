@@ -245,6 +245,15 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
 - [x] 26 new tests (82 total, all passing)
 - [x] E2E verified on staging: idempotency, warm cache after restart, reason-code logs, summary
 
+### lexe-memory Sprint 4 Fix: Migration 007 (2026-02-16)
+
+- [x] **Migration 007**: `memory.set_rls_context_v2(TEXT, TEXT)` + `memory.semantic_vectors_v2` table
+  - Function sets `app.tenant_id` + `app.owner_id` via `set_config()` (transaction-local)
+  - Table: owner_id RLS, request_id idempotency, content_hash dedup, dual tsvector (simple + italian)
+  - 11 indexes including GIN for FTS hybrid search
+  - RLS tenant_isolation policy + updated_at trigger
+- [x] POST /v2/memory/context funzionante: intent classification + type-first/hybrid retrieval via RetrievalBrain
+
 ---
 
 ## In Progress
@@ -268,6 +277,7 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
 | Jaeger traces export                    | Minor  | `shared-jaeger` non attivo su staging, warning nei log ma nessun impatto funzionale                                           |
 | Let's Encrypt rate limit                | Minor  | Alcuni domini legacy (play.lexe.pro, leo.itconsultingsrl.com) in rate limit                                                   |
 | 404 su /api/v1/identity/access-requests | Open   | Endpoint LEO-specific, rimuovere da webchat                                                                                   |
+| 500 su /v2/memory/context               | Fixed  | set_rls_context_v2() e semantic_vectors_v2 mancanti. Migration 007 crea entrambi                                              |
 
 ---
 
