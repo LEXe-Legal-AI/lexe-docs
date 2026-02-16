@@ -90,7 +90,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up -d
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `core`   | tenants, contacts, conversations, conversation_messages, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions | Multi-tenant con RLS |
-| `memory` | memories, semantic_vectors, episodic_vectors, working_memories, profiles, profile_facts, fact_history                                                                                                                                                                                                                                                                                                                                                  | pgvector 1536d       |
+| `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking | pgvector 1536d, RLS 8 tabelle |
 
 ### lexe-max (KB Legal)
 
@@ -215,6 +215,36 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
 - [x] 23 unit tests (HeuristicExtractor, schemas, factory)
 - [x] E2E su staging: 404 (no auto-create) → 201 (add_fact) → confirm → supersede → history
 
+### lexe-memory Sprint 4: DB Idempotency + LLM Summaries + RLS (2026-02-16)
+
+- [x] Migration 005: `memory.delta_tracking` table
+  - `UNIQUE (tenant_id, request_id)` per-tenant idempotency
+  - Status enum: `in_progress` → `completed` | `failed`
+  - `cleanup_old_deltas(retention_days)` function
+  - 3 indexes (composite request, processed_at DESC, partial status)
+- [x] Migration 006: RLS policies su 8 tabelle memory
+  - `memory.fn_get_tenant_id()` + `memory.fn_is_superadmin()` helpers
+  - `tenant_isolation` policy on: episodic_vectors, semantic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking
+  - Defense-in-depth (lexe user is SUPERUSER → RLS bypassed)
+- [x] DB-backed idempotency in DeltaService
+  - `init_db()` → engine + session factory (lazy, first delta call)
+  - `_warm_cache()`: 24h window + max 50K entries (most restrictive wins)
+  - Flow: cache check → DB insert `in_progress` → process → `completed`/`failed`
+  - `get_by_request_id(request_id, tenant_id)`: cache → DB fallback
+  - Survives container restarts (warm cache from DB)
+- [x] LLM Summary module (`llm_summary.py`)
+  - `_call_litellm()`: POST to LiteLLM gateway via httpx
+  - `generate_memory_summary_llm()` + `generate_profile_summary_llm()`
+  - Guard rails: 4000 char input max, prose-only output (no bullets)
+  - Feature flag: `FF_LLM_SUMMARY` (default false)
+  - Latency logging: `method=llm/template latency_ms=X`
+- [x] LLM summary integration in DeltaService.get_summary() and ProfileService.get_profile_summary() with template fallback
+- [x] Reason-code logging: `L0 skipped: no conversation_id`, `L1 skipped: sync_l0_only mode`
+- [x] Config: 5 new settings (ff_llm_summary, llm_summary_model/max_tokens/timeout, litellm_api_key)
+- [x] Summary endpoint fix: `tenant_id` query param for scoped L1/L2 retrieval
+- [x] 26 new tests (82 total, all passing)
+- [x] E2E verified on staging: idempotency, warm cache after restart, reason-code logs, summary
+
 ---
 
 ## In Progress
@@ -280,4 +310,4 @@ Il tool (`normattiva.py`) usa `CODICI_PREDEFINITI[code]["urn_annex"]` per inseri
 
 ---
 
-*Ultimo aggiornamento: 2026-02-15*
+*Ultimo aggiornamento: 2026-02-16*
