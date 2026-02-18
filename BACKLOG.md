@@ -1,6 +1,6 @@
 # LEXE Platform - Backlog
 
-> Aggiornato: 2026-02-04
+> Aggiornato: 2026-02-18 (sync con BACKLOG.md root)
 
 ---
 
@@ -367,6 +367,62 @@ core.responder_personas (
 
 ---
 
+## P2 - VALUTAZIONE
+
+### Uptimer - Uptime Monitoring & Status Page
+**Repo:** https://github.com/VrianCao/Uptimer
+**Priority:** P2
+
+**Descrizione:**
+Valutare l'implementazione di Uptimer come soluzione di uptime monitoring e status page pubblica per la piattaforma LEXE. Uptimer è una soluzione serverless che gira interamente su Cloudflare Edge (zero infra da gestire).
+
+**Tech Stack Uptimer:**
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS + TanStack Query + Recharts
+- Backend: Cloudflare Workers + Hono + Zod
+- Database: Cloudflare D1 (SQLite) + Drizzle ORM
+- Deploy: Cloudflare Pages (frontend) + Workers (API) + GitHub Actions
+- Monorepo pnpm, 96.4% TypeScript coverage, MIT license
+
+**Features rilevanti:**
+- HTTP(S) endpoint checks con header custom, body validation, status code assertion
+- TCP port connectivity check
+- Status page pubblica con aggregate status real-time
+- Uptime metrics e latency visualization per servizio
+- Incident management con timeline tracking
+- Maintenance windows schedulabili
+- Notifiche webhook: Discord, Slack, ntfy, custom HTTP (HMAC-SHA256)
+- Admin dashboard con analytics e CSV export
+- Multi-language (EN, ZH, JA, ES - da aggiungere IT)
+
+**Servizi LEXE da monitorare:**
+- `https://api.lexe.pro` - API Gateway
+- `https://ai.lexe.pro` - Webchat
+- `https://auth.lexe.pro` - Logto Auth
+- `https://llm.lexe.pro` - LiteLLM Gateway
+- Staging equivalenti (`api.stage.lexe.pro`, etc.)
+
+**Azioni:**
+- [ ] Valutare costi Cloudflare Workers/D1 per il volume LEXE
+- [ ] Fork e deploy di test su account Cloudflare
+- [ ] Configurare monitors per tutti i servizi prod + staging
+- [ ] Aggiungere localizzazione italiana
+- [ ] Valutare integrazione notifiche (Slack/Discord team LEXE)
+- [ ] Personalizzare status page con branding LEXE
+- [ ] Valutare alternativa: self-hosted su Hetzner vs Cloudflare Edge
+
+**Pro:**
+- Zero infra (serverless Cloudflare) → nessun container aggiuntivo su Hetzner
+- Monitoring esterno (non dipende dall'infra monitorata)
+- Status page pubblica per trasparenza con clienti
+- MIT license, codebase pulita
+
+**Contro:**
+- Dipendenza da Cloudflare (vendor lock-in leggero)
+- D1 è SQLite → limiti per analytics pesanti
+- Necessita account Cloudflare con Workers plan
+
+---
+
 ## P3 - NICE TO HAVE
 
 ### Altri Canali (stile LEO)
@@ -400,4 +456,4 @@ Riferimento: moduli in `lexe-orchestrator/tools/whatsapp*.py`
 
 ---
 
-*Ultimo aggiornamento: 2026-02-02*
+*Ultimo aggiornamento: 2026-02-18*
