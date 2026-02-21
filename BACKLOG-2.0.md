@@ -150,4 +150,70 @@ Il prompt #16 (very_complex) ha T1 a 108s — quasi 2 minuti per la prima rispos
 
 ---
 
+## BK-006 — KB lacunosa su azioni possessorie e giurisprudenza consolidata
+
+**Severità:** Medium
+**Stato:** TODO
+**Trovato da:** Test manuale webchat 2026-02-21 (domande su art. 1168 c.c.)
+**Componente:** lexe-max (KB), lexe-core (pipeline tool)
+
+### Problema
+
+Testando 3 domande sulle azioni possessorie (spoglio, animus spoliandi, spoglio clandestino/violento), il sistema ha evidenziato:
+
+1. **KB senza massime possessorie:** `kb.massime` non contiene giurisprudenza su art. 1168-1170 c.c. (azioni di reintegrazione e manutenzione). Il NormAgent trova l'articolo ma il DoctrineAgent non trova massime/dottrina.
+
+2. **Giurisprudenza consolidata non recuperata:** Principi noti e pacifici non vengono forniti:
+   - Spoglio continuato: il termine annuale decorre dall'**ultimo atto**, non dal primo
+   - Animus spoliandi **in re ipsa**: si desume dal fatto oggettivo, non serve dolo specifico
+   - Spoglio clandestino: dies a quo dalla **scoperta**, non dall'atto (Cass. SS.UU. 1984/1395)
+
+3. **web_search non attivato come fallback:** Quando la KB non copre un tema, il sistema dovrebbe usare `web_search` per colmare la lacuna. Non lo fa — risponde con "non sono emerse evidenze" senza tentare fonti esterne.
+
+4. **Confidence scoring incoerente:** La seconda risposta (animus spoliandi) ha confidence 70% pur ammettendo di non avere contenuto. Dovrebbe essere ≤40%.
+
+### Dati dal test
+
+| Domanda | Confidence | Normativa | Giurisprudenza | web_search |
+|---------|-----------|-----------|----------------|------------|
+| Dies a quo spoglio (primo/ultimo) | 55% | art. 1168 OK | Non trovata | Non usato |
+| Prova animus spoliandi | 70% | art. 1168 OK | Non trovata | Non usato |
+| Animus in spoglio clandestino/violento | 30% | art. 1168 OK | Non trovata | Non usato |
+
+### Fix Proposte
+
+#### A — Arricchimento KB massime possessorie (P1)
+Importare massime di Cassazione su art. 1168, 1169, 1170 c.c. in `kb.massime`. Fonte: Brocardi, DeJure, o scraping mirato.
+
+- [ ] Identificare fonte massime possessorie (Brocardi ha sezione dedicata)
+- [ ] Import in `kb.massime` con embeddings
+- [ ] Verificare retrieval su domande test
+
+#### B — Fallback web_search su KB miss (P1)
+Quando NormAgent/DoctrineAgent non trovano risultati sufficienti (confidence <50%), il Synthesizer dovrebbe attivare `web_search` come fallback automatico.
+
+- [ ] Aggiungere logica in LEXORC pipeline: se evidenze < soglia → trigger web_search
+- [ ] Integrare risultati web nel parere con disclaimer fonte
+- [ ] Aggiornare auditor per verificare anche fonti web
+
+#### C — Confidence scoring calibration (P2)
+Il confidence non deve essere >50% se il sistema non ha contenuto giurisprudenziale da citare. Aggiungere regola:
+
+```
+Se giurisprudenza_trovata == 0 AND domanda richiede_giurisprudenza:
+    confidence = min(confidence, 40%)
+```
+
+- [ ] Aggiungere post-processing confidence nel Synthesizer
+- [ ] Testare su batch di domande giurisprudenziali
+
+#### D — Gap analysis KB sistematica (P2)
+Mappare quali aree del diritto civile mancano nella KB per pianificare import mirati.
+
+- [ ] Query su `kb.massime` per distribuzione articoli coperti
+- [ ] Confronto con indice codice civile per identificare gap
+- [ ] Prioritizzare: possessorio, obbligazioni, successioni, famiglia
+
+---
+
 *Ultimo aggiornamento: 2026-02-21*
