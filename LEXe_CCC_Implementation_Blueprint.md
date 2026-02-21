@@ -1,14 +1,14 @@
 # LEXe - Piano Esecutivo di Implementazione
 ## Documento di Supporto per Claude Code CLI (CCC)
 
-> **Versione:** 3.1 — CORRETTA vs architettura reale + verifica 21/02
+> **Versione:** 3.2 — Allineamento post-LEXORC rename + KB V3 staging/prod + migration gap fix
 > **Data:** 21/02/2026
-> **Autore:** LEXe.OS - Orchestratore Operativo (v2.0) + Claude Code audit (v3.0)
+> **Autore:** LEXe.OS - Orchestratore Operativo (v2.0) + Claude Code audit (v3.0, v3.2)
 > **Destinazione:** Claude Code CLI — team di agenti paralleli
 > **Strategia selezionata:** BALANCED (B) - 4 sprint, 8 settimane
 > **Ref architetturale:** `lexe-docs/ARCHITECTURE-REFERENCE.md` (source of truth)
 > **Fonti originali:** 5 analisi AI parallele + 4 esecuzioni multi-scenario + ricerca web
-> **Audit v3.1:** Verifica codebase completa (14 LEXE + 2 shared + 2 esterni = 18 servizi, 24 agent files, 13 migrations, 8 tools)
+> **Audit v3.2:** Verifica codebase completa (13 LEXE + 2 shared + 2 esterni = 17 servizi, 24 agent files, 14 migrations, 12 tools)
 
 ---
 
@@ -36,7 +36,7 @@ Questo documento e la **Single Source of Truth** per CCC. Contiene tutto cio che
 
 ### 1.1 Stack Tecnologico Corrente (verificato 2026-02-21)
 
-#### LEXE Platform Services (14 container)
+#### LEXE Platform Services (13 container)
 
 | Componente | Tecnologia | Porta ext→int | Ruolo |
 |---|---|---|---|
@@ -48,12 +48,13 @@ Questo documento e la **Single Source of Truth** per CCC. Contiene tutto cio che
 | DB KB Legal | **PostgreSQL 17 + pgvector + Apache AGE + ParadeDB** (lexe-max) | 5436→5432 | Normativa, massime, embeddings, graph |
 | LLM Gateway | LiteLLM (via OpenRouter) (lexe-litellm) | 4001→4000 | Routing multi-modello, cost tracking |
 | Memory System | FastAPI Python (lexe-memory) | 8103→8103 | Memory L0-L4 |
-| Legal Tools | FastAPI Python (lexe-tools-it) | 8021→8021 | 8 tool legali IT |
+| Legal Tools | FastAPI Python (lexe-tools-it) | 8021→8021 | 10 tool legali IT |
 | Orchestrator | FastAPI Python (lexe-orchestrator) | 8102→8102 | ORCHIDEA Pipeline (**DISABLED default**) |
 | Workflow | **Temporal 1.24** (lexe-temporal) | 7234→7233 | Workflow orchestration |
 | Workflow UI | **Temporal UI 2.26** (lexe-temporal-ui) | 8180→8080 | Temporal dashboard |
 | Auth | **Logto** (lexe-logto) | 3304→3001, 3305→3002 | CIAM (app + admin console) |
-| Embedding | text-embedding-3-small via OpenRouter (lexe-embedding) | — | 1536 dimensioni |
+
+**Nota:** L'embedding (`lexe-embedding`) e un alias LiteLLM (text-embedding-3-small via OpenRouter, 1536d), NON un container separato.
 
 #### Shared Infrastructure (2 container — condivisi con LEO platform)
 
@@ -75,7 +76,7 @@ Questo documento e la **Single Source of Truth** per CCC. Contiene tutto cio che
 |---|---|
 | lexe-memory-worker | Temporal worker non ancora implementato |
 
-**Totale: 14 container LEXE + 2 shared + 2 esterni = 18 servizi.** NO Qdrant, NO Neo4j, NO Redis, NO Open WebUI — tutto PostgreSQL-centrico.
+**Totale: 13 container LEXE + 2 shared + 2 esterni = 17 servizi.** NO Qdrant, NO Neo4j, NO Redis, NO Open WebUI — tutto PostgreSQL-centrico.
 
 #### Network Topology
 
@@ -131,10 +132,10 @@ Utente -> lexe-webchat (React) -> POST /api/v1/gateway/customer/stream
                                         S(min)  S(full) S(full) S(full+deep)
 ```
 
-**Feature flag attuali (tutti False di default):**
-- `ff_legis_agent` → abilita LEGIS (Intent→Plan→Research→Verify→Synthesize)
-- `ff_lexorc_enabled` → abilita LEXORC multi-agente (6 componenti: Classifier + 3 agenti paralleli + Auditor + Synthesizer)
-- `ff_orchestrator_enabled` → abilita ORCHIDEA (8 fasi, Temporal-backed)
+**Feature flag attuali (False di default in config.py, override via env var):**
+- `ff_legis_agent` → abilita LEGIS (Intent→Plan→Research→Verify→Synthesize) — **TRUE su staging** via override
+- `ff_lexorc_enabled` → abilita LEXORC multi-agente (6 componenti: Classifier + 3 agenti paralleli + Auditor + Synthesizer) — **TRUE su staging** via override
+- `ff_orchestrator_enabled` → abilita ORCHIDEA (8 fasi, Temporal-backed) — False ovunque
 
 **Fasi LEGIS:** Phase 0 (Intent Detection) → P(lanning) → R(esearch) → V(erification) → S(ynthesis)
 **Livelli LEGIS:** DIRECT (skip P+V) | SIMPLE (P fast, skip V) | STANDARD (P fast, V full) | COMPLEX (P reasoning, V+coherence)
@@ -145,24 +146,24 @@ Utente -> lexe-webchat (React) -> POST /api/v1/gateway/customer/stream
 
 **lexe-max e un container PostgreSQL 17** con estensioni specializzate (NON un servizio separato).
 
-| Risorsa | Quantita | Storage | Note |
-|---|---|---|---|
-| Massime giurisprudenziali (`kb.massime`) | 38.718 active (46.767 totali) | PostgreSQL + pgvector | anni 1913-2929 |
-| Norme (`kb.norms`) | 4.128 | PostgreSQL | LEGGE=1257, CC=995, CPC=520, DLGS=412, CPP=298, DL=229, CP=192 |
-| Citation graph edges (`kb.graph_edges`) | 58.737 (CITES) | **Apache AGE** (graph PostgreSQL) | run_id=1 attivo |
-| Norm-massima links (`kb.massima_norms`) | 42.338 | PostgreSQL | |
-| Embeddings (`kb.embeddings`) | 41.437 | pgvector (1536d) | |
-| Articoli normativa (`kb.normativa`) | ~4.117 (staging) | PostgreSQL | CC=3170, CP=947 |
-| Category predictions (`kb.category_predictions_v2`) | 279.887 | PostgreSQL | |
-| Sections (`kb.sections`) | 336 | PostgreSQL | |
-| Categories (`kb.categories`) | 51 | PostgreSQL | |
-| Hybrid search | RRF: score(d) = sum(1/(k + r_i(d))) | Dense HNSW + ParadeDB BM25 + Graph boost | |
+| Risorsa | Staging | Produzione | Storage | Note |
+|---|---|---|---|---|
+| Codici/leggi (`kb.work`) | **69** | **95** (69 + alias) | PostgreSQL | Creati via mig. 050-060 |
+| Articoli normativa (`kb.normativa`) | **10.154** (49 codici) | **13.397** | PostgreSQL | CC=3214, CPC=1123, CPP=1030, CGC=870, CP=860 |
+| Chunks (`kb.normativa_chunk`) | **41.256** | **17.343** | PostgreSQL | Embedding-ready, FTS Italian tsvector |
+| Chunk embeddings (`kb.normativa_chunk_embeddings`) | **41.256** | **17.343** | pgvector (1536d) | text-embedding-3-small, 100% coverage |
+| Massime giurisprudenziali (`kb.massime`) | **46.767** (38.718 active) | **46.767** (38.718 active) | PostgreSQL + pgvector | anni 1913-2929 |
+| Norme (`kb.norms`) | 4.128 | 4.128 | PostgreSQL | LEGGE=1257, CC=995, CPC=520, DLGS=412, CPP=298 |
+| Citation graph edges (`kb.graph_edges`) | 58.737 (CITES) | 58.737 (CITES) | **Apache AGE** (graph PostgreSQL) | run_id=1 attivo |
+| Norm-massima links (`kb.massima_norms`) | 42.338 | 42.338 | PostgreSQL | |
+| Massime embeddings (`kb.embeddings`) | 41.437 | 41.437 | pgvector (1536d) | |
+| Annotation (`kb.annotation`) | 13.281 | 13.281 | PostgreSQL | Note Brocardi |
+| Categories (`kb.categories`) | 51 | 51 | PostgreSQL | |
+| Sections (`kb.sections`) | 336 | 336 | PostgreSQL | |
+| Category assignments (`kb.category_assignments`) | — | 45.332 | PostgreSQL | Solo prod |
+| Hybrid search | RRF: score(d) = sum(1/(k + r_i(d))) | — | Dense HNSW + BM25 FTS + Graph boost | Staging: dense+sparse+RRF verified E2E |
 
-**ATTENZIONE — Tabelle documentate ma NON presenti su staging:**
-- `kb.work` (codici/leggi configurati) — NON esiste
-- `kb.normativa_chunk` (chunks con embeddings) — NON esiste
-- `kb.annotation` (annotazioni Brocardi) — NON esiste
-- Queste tabelle potrebbero essere presenti solo in produzione o non ancora migrate.
+**V3 Schema (staging):** 3 enums (identity_class, quality, chunk_strategy), UNIQUE constraint. Quality: 10.082 VALID_STRONG, 72 VALID_SHORT. Identity: 8.824 BASE, 1.330 SUFFIX.
 
 ### 1.4 Modelli LLM Configurati (litellm/config.yaml)
 
@@ -199,12 +200,12 @@ lexe-core/src/lexe_core/
     verifier.py                # Verifica anti-hallucination (Fase V)
     synthesizer.py             # Generazione risposta con evidence (Fase S)
     advanced_orchestrator.py   # LEXORC orchestrator
-    agents/                    # LEXORC: norm_agent, caselaw_agent, doctrine_agent, auditor, synthesizer
+    agents/                    # LEXORC: norm_agent, caselaw_agent, doctrine_agent, auditor, lexorc_synthesizer
     blackboard.py              # Shared state Valkey-backed
     parallel_engine.py         # Esecuzione agenti parallela
     scoring.py                 # Confidence scoring
     models.py                  # PipelineLevel, ScenarioType, IntentResult
-  prompts/v1/                  # 13 prompt template files (planner, researcher, synthesizer, verifier, etc.)
+  prompts/v1/                  # 12 prompt template files (studio_system, follow_up, fact_extractor, intent_detector, legis_*, lexorc_*)
   # NOTA: prompts/v1/ coesiste con agent/prompts.py (608 LOC)
   # agent/prompts.py contiene: INTENT_DETECTOR_SYSTEM_PROMPT, PLANNER_SYSTEM_PROMPT,
   # SYNTHESIZER_SYSTEM_PROMPT, VERIFIER_SYSTEM_PROMPT, 7 scenario-specific synth prompts
@@ -220,16 +221,21 @@ lexe-core/src/lexe_core/
   identity/
     schemas/__init__.py        # TenantResponse, TenantCreate, TenantUpdate
     service.py                 # Tenant management + copy-on-create
-  migrations/                  # 13 SQL files (001-013), prossima: 014
+  migrations/                  # 14 SQL files (001-013 + 017), gap 014-016, prossima: 018
 
 lexe-tools-it/src/lexe_tools_it/tools/
   normattiva.py                # Normattiva OpenData API
+  normattiva_api.py            # Normattiva API client
+  normativa_kb_search.py       # KB normativa hybrid search (dense+sparse+RRF)
   eurlex.py                    # EUR-Lex
   infolex.py                   # InfoLex
   lex_search.py                # Legal search
-  kb_search.py                 # KB semantic search
+  lex_enricher.py              # Enriched search with context
+  kb_search.py                 # KB semantic search (massime)
   one_search.py                # Unified search
   vigenza_fast.py              # Currency checking
+  graph_service.py             # Citation graph service
+  health_monitor.py            # Tool health probes
 
 lexe-memory/src/lexe_memory/
   layers/l0-l4                 # 5 memory layers (Valkey + PostgreSQL + AGE)
@@ -258,12 +264,12 @@ I problemi sono ordinati per criticita di implementazione. Ogni soluzione includ
 **Causa root:** configurazione iniziale conservativa nel catalogo modelli.
 
 **NOTA v3.0:** La tabella corretta e `core.llm_model_catalog` (NON `core.model_catalog`).
-Il campo config e `config JSONB` aggiunto in migration 010. La prossima migration disponibile e **014**.
+Il campo config e `config JSONB` aggiunto in migration 010. La prossima migration disponibile e **018** (014-016 sono un gap, 017 e il rename MANUS→LEXORC).
 
 **Soluzione:**
 
 ```sql
--- File: lexe-core/migrations/014_fix_lexe_fast_tokens.sql
+-- File: lexe-core/migrations/018_fix_lexe_fast_tokens.sql
 -- Descrizione: Aumenta token limit per lexe-fast
 -- Rollback: UPDATE core.llm_model_catalog SET config = jsonb_set(COALESCE(config,'{}'), '{max_completion_tokens}', '250') WHERE model_name = 'lexe-fast';
 
@@ -652,7 +658,7 @@ I 6 ruoli LEXORC non sono ancora nel DB (`model_role_defaults`). Sono in `config
 **Soluzione (solo la parte mancante):**
 
 ```sql
--- File: lexe-core/migrations/014_lexorc_role_defaults.sql (o successiva)
+-- File: lexe-core/migrations/019_lexorc_role_defaults.sql (o successiva)
 -- Descrizione: Aggiunge i ruoli LEXORC a model_role_defaults
 -- Rollback: DELETE FROM core.model_role_defaults WHERE role LIKE 'lexorc_%';
 
@@ -1170,9 +1176,10 @@ Questo documento implementa la **Strategia B (BALANCED)**. Per riferimento, il c
 >   v2.0 - 20/02/2026 - Sintesi definitiva best-of-breed per CCC
 >   v3.0 - 20/02/2026 - Audit architetturale completo vs codebase reale (Claude Code)
 >   v3.1 - 21/02/2026 - Verifica codebase: fix 12 incongruenze (conteggi, nomi tool, scenari, modelli, KB, FF pattern)
+>   v3.2 - 21/02/2026 - Allineamento post-LEXORC rename: fix container count (13 non 14), KB staging completa (10K+ art, 41K chunks), migration gap (next: 018), FF staging overrides, tool file list aggiornata
 > Prossima revisione: fine Sprint 10 (circa meta marzo 2026)
 > Fonti originali: GEM, QW35, MM25, QW3M, DS32, PKB, WEB1-4
-> Audit v3.0: Esplorazione diretta di 6 repository, 13 container, 24 agent files, 13 migrations
+> Audit v3.2: 13 LEXE container, 14 migrations (001-013 + 017), 12 prompt templates, 12 tool files
 
 ---
 
@@ -1204,7 +1211,14 @@ Errori fattuali corretti rispetto alla versione 2.0 del documento.
 | 20 | Admin: "11 router, 9 service" | Reale: **14 router, 11 service** (verificato con glob su codebase) | Sezione 1.5 corretta (v3.1) |
 | 21 | LEXORC: "5 agenti paralleli" | **6 componenti** (Classifier + 3 agenti paralleli + Auditor + Synthesizer) | Sezione 1.2 corretta (v3.1) |
 | 22 | Modelli: tabella con 7 alias | **9 alias** nel config.yaml (mancavano `legal-tier1-gemini`, `legal-tier2-gemini`) | Sezione 1.4 corretta (v3.1) |
-| 23 | kb.work, kb.normativa_chunk, kb.annotation | **NON esistono su staging** (potrebbero essere solo in prod) | Sezione 1.3 corretta (v3.1) |
+| 23 | kb.work, kb.normativa_chunk, kb.annotation "NON esistono su staging" | **ESISTONO** (mig. 050-060): 69 work, 10.154 art, 41.256 chunks, 13.281 annotations | Sezione 1.3 corretta (v3.2) |
 | 24 | Scenari: "generico", "normativa", "giurisprudenza", "dottrina" | Reali: `contratto_revisione`, `recupero_crediti`, `custom` (da `agent/models.py` ScenarioType) | Sezione 2.2 corretta (v3.1) |
 | 25 | `_pre_intent_route(message)` senza params | Firma reale: `(message, litellm_url, litellm_api_key, tenant_id)` | Sezione 2.2 corretta (v3.1) |
 | 26 | ff_legis_agent via `os.getenv()` | Usa **pydantic-settings** (`ff_legis_agent: bool = False`) | Sezione 2.7 corretta (v3.1) |
+| 27 | "14 container LEXE" | **13** (lexe-embedding e alias LiteLLM, non container) | Sezione 1.1 corretta (v3.2) |
+| 28 | "Prossima migration: 014" | **018** (017 esiste = rename MANUS→LEXORC, gap 014-016) | Sezioni 2.1, 2.5 corrette (v3.2) |
+| 29 | kb.normativa "~4.117 staging" | **10.154** staging, **13.397** prod (post import V3 + 49 codici) | Sezione 1.3 corretta (v3.2) |
+| 30 | "13 prompt template files" | **12** file in prompts/v1/ | Sezione 1.5 corretta (v3.2) |
+| 31 | agents/ "synthesizer" generico | File reale: **lexorc_synthesizer.py** | Sezione 1.5 corretta (v3.2) |
+| 32 | "8 tool legali IT" | **10+** tool files (+ normativa_kb_search, normattiva_api, lex_enricher, graph_service, health_monitor) | Sezione 1.1, 1.5 corrette (v3.2) |
+| 33 | FF tutti False, nessun staging override menzionato | **Staging override**: `ff_legis_agent=true`, `ff_lexorc_enabled=true` | Sezione 1.2 corretta (v3.2) |
