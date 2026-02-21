@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=210mm">
+<title>LEXe 2.0 — Proposte di Miglioramento</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 9pt; line-height: 1.4; color: #1a1a2e; background: #e0e0e0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { width: 210mm; height: 297mm; padding: 14mm 16mm 18mm 16mm; margin: 4mm auto; background: #fff; position: relative; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+@media print { body { background: #fff; } .page { margin: 0; box-shadow: none; page-break-after: always; } .page:last-child { page-break-after: avoid; } }
+.hdr { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2.5px solid #0d47a1; padding-bottom: 6px; margin-bottom: 10px; }
+.hdr-left h1 { font-size: 15pt; font-weight: 700; color: #0d47a1; }
+.hdr-left .sub { font-size: 8pt; color: #546e7a; margin-top: 1px; }
+.hdr-right { text-align: right; font-size: 7.5pt; color: #455a64; line-height: 1.45; }
+.hdr-right .dt { font-weight: 700; color: #0d47a1; font-size: 8.5pt; }
+.conf { background: #b71c1c; color: #fff; text-align: center; padding: 4px 0; font-size: 7pt; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; }
+.ftr { position: absolute; bottom: 10mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid #0d47a1; padding-top: 4px; font-size: 7pt; color: #546e7a; }
+.ftr-l { font-weight: 600; color: #0d47a1; } .ftr-c { color: #b71c1c; font-weight: 700; letter-spacing: .8px; font-size: 6.5pt; } .ftr-r { font-weight: 600; }
+h2 { font-size: 11pt; color: #0d47a1; font-weight: 700; border-left: 3.5px solid #1565c0; padding-left: 8px; margin: 11px 0 6px 0; }
+h3 { font-size: 9.5pt; color: #1565c0; margin: 8px 0 4px 0; font-weight: 600; }
+strong { color: #0d47a1; }
+p { margin: 3px 0; }
+table { width: 100%; border-collapse: collapse; margin: 4px 0 8px 0; font-size: 8pt; }
+thead th { background: #0d47a1; color: #fff; padding: 4px 6px; text-align: left; font-weight: 600; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .4px; }
+tbody td { padding: 3.5px 6px; border-bottom: 1px solid #e0e0e0; }
+tbody tr:nth-child(even) { background: #f5f7fa; }
+.b { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 6.5pt; font-weight: 700; }
+.b-ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.b-w { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+.b-err { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+.b-i { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+.b-n { background: #f3e5f5; color: #6a1b9a; border: 1px solid #ce93d8; }
+.bx { border-radius: 4px; padding: 6px 10px; margin: 5px 0; font-size: 8pt; }
+.bx-b { background: #e3f2fd; border-left: 3px solid #1565c0; }
+.bx-g { background: #e8f5e9; border-left: 3px solid #2e7d32; }
+.bx-o { background: #fff3e0; border-left: 3px solid #e65100; }
+.bx-r { background: #ffebee; border-left: 3px solid #c62828; }
+.kpi { display: flex; gap: 8px; margin: 8px 0 10px 0; }
+.kc { flex: 1; background: #f5f7fa; border: 1px solid #e0e0e0; border-top: 3px solid #1565c0; border-radius: 0 0 4px 4px; padding: 7px 6px; text-align: center; }
+.kc.g { border-top-color: #2e7d32; } .kc.o { border-top-color: #e65100; } .kc.p { border-top-color: #6a1b9a; } .kc.r { border-top-color: #c62828; }
+.kv { font-size: 16pt; font-weight: 700; color: #0d47a1; line-height: 1; }
+.kc.g .kv { color: #2e7d32; } .kc.o .kv { color: #e65100; } .kc.p .kv { color: #6a1b9a; } .kc.r .kv { color: #c62828; }
+.kl { font-size: 6.5pt; color: #78909c; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+.author-block { text-align: center; margin-top: 14px; padding: 10px 14px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 4px; }
+.author-block .label { font-size: 7pt; color: #78909c; text-transform: uppercase; letter-spacing: 1.5px; }
+.author-block .name { font-size: 11pt; font-weight: 700; color: #0d47a1; margin: 3px 0; }
+.author-block .org { font-size: 7pt; color: #78909c; }
+.author-block .legal { font-size: 6.5pt; color: #b71c1c; font-weight: 600; margin-top: 4px; letter-spacing: .4px; }
+.matrix-table td { vertical-align: top; padding: 5px 6px; font-size: 7.5pt; line-height: 1.5; }
+.matrix-table .axis-label { background: #0d47a1; color: #fff; font-weight: 700; font-size: 7pt; text-transform: uppercase; letter-spacing: .3px; text-align: center; vertical-align: middle; }
+.matrix-table .cell { border: 1px solid #e0e0e0; }
+.refs { font-size: 7pt; color: #455a64; line-height: 1.55; margin-top: 6px; }
+.refs p { margin: 1.5px 0; }
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe 2.0 &mdash; Proposte di Miglioramento</h1>
+      <div class="sub">Visione Strategica &amp; Fondamenta</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 Febbraio 2026</div>
+      Doc Ref: LEXE-PROPOSALS-001<br>
+      Versione: 1.0
+    </div>
+  </div>
+  <div class="conf">CONFIDENTIAL &mdash; INTERNAL USE ONLY</div>
+
+  <div class="kpi">
+    <div class="kc"><div class="kv">14</div><div class="kl">Feature Totali</div></div>
+    <div class="kc g"><div class="kv">3</div><div class="kl">Livelli</div></div>
+    <div class="kc p"><div class="kv">4</div><div class="kl">Sprint</div></div>
+    <div class="kc o"><div class="kv">24</div><div class="kl">Settimane</div></div>
+  </div>
+
+  <div class="bx bx-b">
+    <strong>Obiettivo:</strong> Questo documento delinea miglioramenti tecnici e nuove funzionalit&agrave; strategiche per LEXe 2.0. Obiettivo: posizionare LEXe come prodotto superiore a Lexroom e Harvey AI.
+  </div>
+
+  <h2>Principi Guida</h2>
+  <table>
+    <thead><tr><th>#</th><th>Principio</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td><strong>Da Assistente ad Agente</strong></td><td>Evoluzione da D&amp;R reattivo a sistema proattivo, autonomo, multi-step</td></tr>
+      <tr><td><strong>2</strong></td><td><strong>Fiducia e Verificabilit&agrave;</strong></td><td>Ogni info AI tracciabile, verificabile, priva di allucinazioni</td></tr>
+      <tr><td><strong>3</strong></td><td><strong>Automazione Workflow</strong></td><td>Automatizzare interi processi, non singoli task</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Livello 1 &mdash; Miglioramenti Fondamentali</h2>
+  <p style="margin-bottom:4px;">Prerequisiti architetturali imprescindibili per l'evoluzione della piattaforma.</p>
+  <table>
+    <thead><tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Effort</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>3.1</strong></td>
+        <td><strong>Attivazione RLS Multi-Tenant</strong></td>
+        <td><span class="b b-err">P0</span></td>
+        <td>1-2 sett.</td>
+        <td>TenantContextMiddleware, prerequisito sicurezza enterprise</td>
+      </tr>
+      <tr>
+        <td><strong>3.2</strong></td>
+        <td><strong>Attivazione Temporal</strong></td>
+        <td><span class="b b-err">P0</span></td>
+        <td>2-3 sett.</td>
+        <td>Task a lunga durata, retry, osservabilit&agrave;</td>
+      </tr>
+      <tr>
+        <td><strong>3.3</strong></td>
+        <td><strong>Unificazione lexe-max</strong></td>
+        <td><span class="b b-w">P1</span></td>
+        <td>3-4 sett.</td>
+        <td>/search/unified, /graph/query, differenziatore strategico</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bx bx-o">
+    <strong>Nota critica:</strong> Le feature 3.1 (RLS) e 3.2 (Temporal) sono bloccanti per l'intera roadmap. Senza di esse, nessuna feature di livello superiore pu&ograve; essere attivata in produzione in modo sicuro e affidabile.
+  </div>
+
+  <div class="ftr">
+    <span class="ftr-l">LEXE Platform</span>
+    <span class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</span>
+    <span class="ftr-r">Page 1 / 5</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe 2.0 &mdash; Proposte di Miglioramento</h1>
+      <div class="sub">Feature Core &amp; Innovazione Utente</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 Febbraio 2026</div>
+      Doc Ref: LEXE-PROPOSALS-001<br>
+      Versione: 1.0
+    </div>
+  </div>
+  <div class="conf">CONFIDENTIAL &mdash; INTERNAL USE ONLY</div>
+
+  <h2>Livello 2 &mdash; Feature Core di Nuova Generazione</h2>
+
+  <h3>4.1 Agentic RAG (ReAct Loop)</h3>
+  <div class="bx bx-b">
+    <strong>Flusso ReAct in 5 step:</strong> <strong>1.</strong> Pianificazione &mdash; decomposizione query in sub-task &rarr; <strong>2.</strong> Esecuzione &mdash; chiamata parallela tool (KB, Normattiva, EUR-Lex) &rarr; <strong>3.</strong> Sintesi &mdash; aggregazione risultati con scoring &rarr; <strong>4.</strong> Auto-Correzione &mdash; verifica coerenza e completezza &rarr; <strong>5.</strong> Generazione &mdash; risposta finale con citazioni inline verificate.
+  </div>
+
+  <h3>4.2 CiteCheck AI</h3>
+  <div class="bx bx-g">
+    <strong>Verifica automatica citazioni:</strong> Ogni riferimento normativo e giurisprudenziale viene validato in tempo reale contro la KB. Risultato: badge di attendibilit&agrave; per ogni citazione &mdash; verificata (verde), non trovata (giallo), contraddittoria (rosso). Risolve il problema n.1 dell'AI legale: la fiducia.
+  </div>
+
+  <h3>4.3 Deep Research</h3>
+  <div class="bx bx-o">
+    <strong>Ricerca approfondita asincrona:</strong> Analisi multi-fonte eseguita in background via Temporal. Report strutturato con normativa, giurisprudenza, dottrina. Tier premium con notifica al completamento.
+  </div>
+
+  <table>
+    <thead><tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Effort</th><th>Prerequisiti</th></tr></thead>
+    <tbody>
+      <tr><td><strong>4.1</strong></td><td><strong>Agentic RAG (ReAct)</strong></td><td><span class="b b-w">P1</span></td><td>4-6 sett.</td><td>Temporal (3.2)</td></tr>
+      <tr><td><strong>4.2</strong></td><td><strong>CiteCheck AI</strong></td><td><span class="b b-w">P1</span></td><td>3-4 sett.</td><td>Agentic RAG (4.1)</td></tr>
+      <tr><td><strong>4.3</strong></td><td><strong>Deep Research</strong></td><td><span class="b b-i">P2</span></td><td>3-4 sett.</td><td>Temporal + Agentic RAG</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Livello 3 &mdash; Feature Innovative Utente</h2>
+  <p style="margin-bottom:4px;">Funzionalit&agrave; che trasformano LEXe da chatbot a piattaforma di lavoro legale.</p>
+  <table>
+    <thead><tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Effort</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>5.1</strong></td>
+        <td><strong>Interfaccia Vocale</strong></td>
+        <td><span class="b b-i">P2</span></td>
+        <td>2-3 sett.</td>
+        <td>Whisper STT, dettatura intelligente con formattazione legale</td>
+      </tr>
+      <tr>
+        <td><strong>5.2</strong></td>
+        <td><strong>Workflow Builder No-Code</strong></td>
+        <td><span class="b b-n">P3</span></td>
+        <td>6-8 sett.</td>
+        <td>Automazione visuale drag-and-drop, piattaforma estendibile</td>
+      </tr>
+      <tr>
+        <td><strong>5.3</strong></td>
+        <td><strong>Spazio Collaborativo</strong></td>
+        <td><span class="b b-n">P3</span></td>
+        <td>4-6 sett.</td>
+        <td>Pratiche/Casi condivisi, Knowledge Graph L4, team workspace</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bx bx-b">
+    <strong>Differenziatore chiave:</strong> Le feature 5.2 (Workflow Builder) e 5.3 (Collaborativo) posizionano LEXe come piattaforma, non come semplice chatbot. Nessun competitor offre automazione visuale + collaborazione nativa per studi legali.
+  </div>
+
+  <div class="ftr">
+    <span class="ftr-l">LEXE Platform</span>
+    <span class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</span>
+    <span class="ftr-r">Page 2 / 5</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 3 ==================== -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe 2.0 &mdash; Proposte di Miglioramento</h1>
+      <div class="sub">Feature Utente &amp; Mercato Brasiliano</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 Febbraio 2026</div>
+      Doc Ref: LEXE-PROPOSALS-001<br>
+      Versione: 1.0
+    </div>
+  </div>
+  <div class="conf">CONFIDENTIAL &mdash; INTERNAL USE ONLY</div>
+
+  <h2>Livello 3 &mdash; Feature Innovative Utente (cont.)</h2>
+  <table>
+    <thead><tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Effort</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>5.4</strong></td>
+        <td><strong>Template Documenti Legali</strong></td>
+        <td><span class="b b-i">P2</span></td>
+        <td>4-5 sett.</td>
+        <td>Atto di citazione, parere, contratti. Output MD/PDF strutturato</td>
+      </tr>
+      <tr>
+        <td><strong>5.5</strong></td>
+        <td><strong>Dashboard Analitica</strong></td>
+        <td><span class="b b-i">P2</span></td>
+        <td>3-4 sett.</td>
+        <td>Metriche utilizzo, costi LLM, trend, ROI stimato per studio</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Feature Mercato Brasiliano</h2>
+  <p style="margin-bottom:5px;">Espansione strategica nel mercato legale brasiliano &mdash; il pi&ugrave; grande dell'America Latina.</p>
+
+  <h3>6.1 Integrazione Tribunali BR</h3>
+  <div class="bx bx-b">
+    <strong>Fonti integrate:</strong> STF (Supremo Tribunal Federal), STJ (Superior Tribunal de Justi&ccedil;a), TST (Tribunal Superior do Trabalho), Planalto (legislazione federale), DJe (Di&aacute;rio da Justi&ccedil;a Eletr&ocirc;nico). Include alerting automatico su nuove decisioni rilevanti per le pratiche attive.
+  </div>
+
+  <h3>6.2 Compliance LGPD</h3>
+  <div class="bx bx-o">
+    <strong>Protezione dati brasiliana:</strong> Pseudonimizzazione reversibile per CPF, CNPJ, numero OAB. Conforme alla Lei Geral de Prote&ccedil;&atilde;o de Dados. Integrazione con lexe-privacy per gestione consensi e diritti dell'interessato. Audit trail completo.
+  </div>
+
+  <h3>6.3 Knowledge Cut BR</h3>
+  <div class="bx bx-g">
+    <strong>Aggiornamento Knowledge Base:</strong> Knowledge Cut trimestrali per legislazione e giurisprudenza brasiliana. Aggiornamento near real-time per s&uacute;mulas vinculantes e decisioni di grande impatto. Pipeline dedicata in lexe-tools-br.
+  </div>
+
+  <table>
+    <thead><tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Effort</th><th>Dettaglio</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>6.1</strong></td>
+        <td><strong>Integrazione Tribunali BR</strong></td>
+        <td><span class="b b-w">P1</span></td>
+        <td>4-6 sett.</td>
+        <td>STF, STJ, TST, Planalto, DJe</td>
+      </tr>
+      <tr>
+        <td><strong>6.2</strong></td>
+        <td><strong>Compliance LGPD</strong></td>
+        <td><span class="b b-w">P1</span></td>
+        <td>2-3 sett.</td>
+        <td>CPF, CNPJ, OAB, reversibilit&agrave;</td>
+      </tr>
+      <tr>
+        <td><strong>6.3</strong></td>
+        <td><strong>Knowledge Cut BR</strong></td>
+        <td><span class="b b-i">P2</span></td>
+        <td>3-4 sett.</td>
+        <td>Trimestrale + near real-time</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bx bx-b">
+    <strong>Strategia BR:</strong> Il mercato legale brasiliano conta oltre 1.3 milioni di avvocati iscritti all'OAB. L'integrazione nativa con i tribunali superiori e la compliance LGPD rappresentano barriere all'ingresso significative per i competitor internazionali.
+  </div>
+
+  <div class="ftr">
+    <span class="ftr-l">LEXE Platform</span>
+    <span class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</span>
+    <span class="ftr-r">Page 3 / 5</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 4 ==================== -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe 2.0 &mdash; Proposte di Miglioramento</h1>
+      <div class="sub">Matrice Impatto vs Effort &amp; Priorit&agrave;</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 Febbraio 2026</div>
+      Doc Ref: LEXE-PROPOSALS-001<br>
+      Versione: 1.0
+    </div>
+  </div>
+  <div class="conf">CONFIDENTIAL &mdash; INTERNAL USE ONLY</div>
+
+  <h2>Matrice Impatto vs Effort</h2>
+  <table class="matrix-table" style="margin:6px 0 10px 0;">
+    <thead>
+      <tr>
+        <th style="width:14%; background:#1a1a2e;"></th>
+        <th style="width:28.6%; text-align:center;">LOW EFFORT<br><span style="font-weight:400;font-size:6.5pt;text-transform:none;">(1-3 settimane)</span></th>
+        <th style="width:28.6%; text-align:center;">MEDIUM EFFORT<br><span style="font-weight:400;font-size:6.5pt;text-transform:none;">(3-6 settimane)</span></th>
+        <th style="width:28.6%; text-align:center;">HIGH EFFORT<br><span style="font-weight:400;font-size:6.5pt;text-transform:none;">(6+ settimane)</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="axis-label" style="background:#0d47a1;color:#fff;font-weight:700;font-size:7pt;text-align:center;vertical-align:middle;">HIGH<br>IMPACT</td>
+        <td class="cell" style="background:#e8f5e9;">
+          <span class="b b-err">P0</span> <strong>RLS</strong> (3.1)<br>
+          <span class="b b-w">P1</span> <strong>LGPD</strong> (6.2)<br>
+          <span class="b b-w">P1</span> <strong>CiteCheck</strong> (4.2)
+        </td>
+        <td class="cell" style="background:#e8f5e9;">
+          <span class="b b-err">P0</span> <strong>Temporal</strong> (3.2)<br>
+          <span class="b b-w">P1</span> <strong>lexe-max</strong> (3.3)<br>
+          <span class="b b-w">P1</span> <strong>Agentic RAG</strong> (4.1)<br>
+          <span class="b b-w">P1</span> <strong>Tribunali BR</strong> (6.1)
+        </td>
+        <td class="cell" style="background:#fff3e0;">
+          <span class="b b-n">P3</span> <strong>Workflow Builder</strong> (5.2)<br>
+          <span class="b b-n">P3</span> <strong>Collaborativo</strong> (5.3)
+        </td>
+      </tr>
+      <tr>
+        <td class="axis-label" style="background:#1565c0;color:#fff;font-weight:700;font-size:7pt;text-align:center;vertical-align:middle;">MEDIUM<br>IMPACT</td>
+        <td class="cell" style="background:#f5f7fa;">
+          <span class="b b-i">P2</span> <strong>Vocale</strong> (5.1)<br>
+          <span class="b b-i">P2</span> <strong>Dashboard</strong> (5.5)
+        </td>
+        <td class="cell" style="background:#f5f7fa;">
+          <span class="b b-i">P2</span> <strong>Deep Research</strong> (4.3)<br>
+          <span class="b b-i">P2</span> <strong>Template</strong> (5.4)<br>
+          <span class="b b-i">P2</span> <strong>KB Cut BR</strong> (6.3)
+        </td>
+        <td class="cell" style="background:#f5f7fa;">
+          &mdash;
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Tabella Riepilogativa Completa</h2>
+  <table style="font-size:7.5pt;">
+    <thead>
+      <tr><th>#</th><th>Feature</th><th>Priorit&agrave;</th><th>Impatto</th><th>Effort</th><th>Repository</th><th>Prerequisiti</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>3.1</td><td><strong>RLS Multi-Tenant</strong></td><td><span class="b b-err">P0</span></td><td><span class="b b-err">Molto Alto</span></td><td>1-2 sett.</td><td>lexe-core</td><td>&mdash;</td></tr>
+      <tr><td>3.2</td><td><strong>Temporal</strong></td><td><span class="b b-err">P0</span></td><td><span class="b b-err">Molto Alto</span></td><td>2-3 sett.</td><td>lexe-infra, lexe-core</td><td>&mdash;</td></tr>
+      <tr><td>3.3</td><td><strong>Unificazione lexe-max</strong></td><td><span class="b b-w">P1</span></td><td><span class="b b-w">Alto</span></td><td>3-4 sett.</td><td>lexe-max</td><td>&mdash;</td></tr>
+      <tr><td>4.1</td><td><strong>Agentic RAG (ReAct)</strong></td><td><span class="b b-w">P1</span></td><td><span class="b b-err">Molto Alto</span></td><td>4-6 sett.</td><td>lexe-core, lexe-orchestrator</td><td>3.2</td></tr>
+      <tr><td>4.2</td><td><strong>CiteCheck AI</strong></td><td><span class="b b-w">P1</span></td><td><span class="b b-err">Molto Alto</span></td><td>3-4 sett.</td><td>lexe-core, lexe-max</td><td>4.1</td></tr>
+      <tr><td>4.3</td><td><strong>Deep Research</strong></td><td><span class="b b-i">P2</span></td><td><span class="b b-w">Alto</span></td><td>3-4 sett.</td><td>lexe-orchestrator</td><td>3.2, 4.1</td></tr>
+      <tr><td>5.1</td><td><strong>Interfaccia Vocale</strong></td><td><span class="b b-i">P2</span></td><td><span class="b b-i">Medio</span></td><td>2-3 sett.</td><td>lexe-webchat</td><td>&mdash;</td></tr>
+      <tr><td>5.2</td><td><strong>Workflow Builder</strong></td><td><span class="b b-n">P3</span></td><td><span class="b b-w">Alto</span></td><td>6-8 sett.</td><td>lexe-webchat, lexe-core</td><td>3.2</td></tr>
+      <tr><td>5.3</td><td><strong>Spazio Collaborativo</strong></td><td><span class="b b-n">P3</span></td><td><span class="b b-w">Alto</span></td><td>4-6 sett.</td><td>lexe-core, lexe-webchat</td><td>3.1</td></tr>
+      <tr><td>5.4</td><td><strong>Template Documenti</strong></td><td><span class="b b-i">P2</span></td><td><span class="b b-i">Medio</span></td><td>4-5 sett.</td><td>lexe-core</td><td>4.1</td></tr>
+      <tr><td>5.5</td><td><strong>Dashboard Analitica</strong></td><td><span class="b b-i">P2</span></td><td><span class="b b-i">Medio</span></td><td>3-4 sett.</td><td>lexe-webchat, lexe-core</td><td>&mdash;</td></tr>
+      <tr><td>6.1</td><td><strong>Tribunali BR</strong></td><td><span class="b b-w">P1</span></td><td><span class="b b-err">Molto Alto</span></td><td>4-6 sett.</td><td>lexe-tools-br</td><td>&mdash;</td></tr>
+      <tr><td>6.2</td><td><strong>Compliance LGPD</strong></td><td><span class="b b-w">P1</span></td><td><span class="b b-err">Molto Alto</span></td><td>2-3 sett.</td><td>lexe-privacy</td><td>&mdash;</td></tr>
+      <tr><td>6.3</td><td><strong>Knowledge Cut BR</strong></td><td><span class="b b-i">P2</span></td><td><span class="b b-i">Medio</span></td><td>3-4 sett.</td><td>lexe-tools-br, lexe-max</td><td>6.1</td></tr>
+    </tbody>
+  </table>
+
+  <div class="ftr">
+    <span class="ftr-l">LEXE Platform</span>
+    <span class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</span>
+    <span class="ftr-r">Page 4 / 5</span>
+  </div>
+</div>
+
+<!-- ==================== PAGE 5 ==================== -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe 2.0 &mdash; Proposte di Miglioramento</h1>
+      <div class="sub">Roadmap &amp; Conclusioni</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 Febbraio 2026</div>
+      Doc Ref: LEXE-PROPOSALS-001<br>
+      Versione: 1.0
+    </div>
+  </div>
+  <div class="conf">CONFIDENTIAL &mdash; INTERNAL USE ONLY</div>
+
+  <h2>Roadmap Implementativa &mdash; 24 Settimane</h2>
+
+  <div class="bx bx-r" style="margin-bottom:6px;">
+    <strong>Sprint 1 &mdash; Fondamenta</strong> &nbsp;(Settimane 1-4)<br>
+    <span class="b b-err">P0</span> RLS Multi-Tenant (3.1) &nbsp;&bull;&nbsp;
+    <span class="b b-err">P0</span> Attivazione Temporal (3.2) &nbsp;&bull;&nbsp;
+    <span class="b b-w">P1</span> lexe-tools-br setup (6.1) &nbsp;&bull;&nbsp;
+    <span class="b b-w">P1</span> LGPD Compliance (6.2)<br>
+    <span style="font-size:7pt;color:#78909c;">Obiettivo: infrastruttura sicura e multi-tenant, avvio pipeline brasiliana.</span>
+  </div>
+
+  <div class="bx bx-o" style="margin-bottom:6px;">
+    <strong>Sprint 2 &mdash; Intelligenza</strong> &nbsp;(Settimane 5-10)<br>
+    <span class="b b-w">P1</span> Unificazione lexe-max (3.3) &nbsp;&bull;&nbsp;
+    <span class="b b-w">P1</span> Agentic RAG ReAct (4.1) &nbsp;&bull;&nbsp;
+    <span class="b b-w">P1</span> CiteCheck AI (4.2) &nbsp;&bull;&nbsp;
+    <span class="b b-w">P1</span> Completamento Tribunali BR (6.1)<br>
+    <span style="font-size:7pt;color:#78909c;">Obiettivo: motore di ricerca unificato, RAG agente, verifica citazioni automatica.</span>
+  </div>
+
+  <div class="bx bx-b" style="margin-bottom:6px;">
+    <strong>Sprint 3 &mdash; Esperienza</strong> &nbsp;(Settimane 11-16)<br>
+    <span class="b b-i">P2</span> Deep Research (4.3) &nbsp;&bull;&nbsp;
+    <span class="b b-i">P2</span> Template Documenti (5.4) &nbsp;&bull;&nbsp;
+    <span class="b b-i">P2</span> Interfaccia Vocale (5.1) &nbsp;&bull;&nbsp;
+    <span class="b b-i">P2</span> Dashboard Analitica (5.5) &nbsp;&bull;&nbsp;
+    <span class="b b-i">P2</span> KB Cut BR (6.3)<br>
+    <span style="font-size:7pt;color:#78909c;">Obiettivo: esperienza utente completa, ricerca avanzata, reporting, voce.</span>
+  </div>
+
+  <div class="bx bx-g" style="margin-bottom:8px;">
+    <strong>Sprint 4 &mdash; Piattaforma</strong> &nbsp;(Settimane 17-24)<br>
+    <span class="b b-n">P3</span> Workflow Builder No-Code (5.2) &nbsp;&bull;&nbsp;
+    <span class="b b-n">P3</span> Spazio Collaborativo (5.3) &nbsp;&bull;&nbsp;
+    Canali aggiuntivi (Email, Telegram)<br>
+    <span style="font-size:7pt;color:#78909c;">Obiettivo: da chatbot a piattaforma legale completa con automazione e collaborazione.</span>
+  </div>
+
+  <h2>Conclusioni</h2>
+
+  <div class="bx bx-g" style="margin-bottom:5px;">
+    <strong>LEXe 2.0:</strong> da assistente legale basato su chat a piattaforma di intelligenza legale completa. Posizionamento: sistema agente multi-step con verifica automatica citazioni, Knowledge Graph proprietario, automazione workflow legali. Espansione internazionale con il mercato brasiliano come primo target.
+  </div>
+
+  <div class="bx bx-r" style="margin-bottom:8px;">
+    <strong>Investimento critico:</strong> Agentic RAG (4.1) + CiteCheck (4.2) &mdash; risolvono il problema pi&ugrave; grande dell'AI legale: la fiducia. Senza verifica automatica delle citazioni, nessun sistema AI pu&ograve; essere adottato in contesti professionali ad alta responsabilit&agrave;.
+  </div>
+
+  <h2>Riferimenti</h2>
+  <div class="refs">
+    <p>[1] Yao, S. et al. &mdash; <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>, ICLR 2023.</p>
+    <p>[2] Lewis, P. et al. &mdash; <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</em>, NeurIPS 2020.</p>
+    <p>[3] Temporal Technologies &mdash; <em>Temporal Workflow Engine Documentation</em>, 2025.</p>
+    <p>[4] PostgreSQL &mdash; <em>Row-Level Security Policies</em>, PostgreSQL 16 Documentation.</p>
+    <p>[5] Lei Geral de Prote&ccedil;&atilde;o de Dados (LGPD) &mdash; Lei n&ordm; 13.709/2018, Rep&uacute;blica Federativa do Brasil.</p>
+    <p>[6] Harvey AI &mdash; <em>Platform Architecture Overview</em>, harvey.ai, 2025.</p>
+    <p>[7] Lexroom &mdash; <em>Legal AI Assistant Features</em>, lexroom.ai, 2025.</p>
+    <p>[8] GDPR / Regolamento UE 2016/679 &mdash; <em>Regolamento Generale sulla Protezione dei Dati</em>.</p>
+  </div>
+
+  <div class="author-block">
+    <div class="label">Autore</div>
+    <div class="name">Francesco Trani</div>
+    <div class="org">LEXE Legal AI &mdash; La legge a portata di AI</div>
+    <div class="legal">Documento riservato &mdash; Tutti i diritti riservati &copy; 2026</div>
+  </div>
+
+  <div class="ftr">
+    <span class="ftr-l">LEXE Platform</span>
+    <span class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</span>
+    <span class="ftr-r">Page 5 / 5</span>
+  </div>
+</div>
+
+</body>
+</html>
