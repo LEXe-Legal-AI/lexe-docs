@@ -190,11 +190,23 @@ Testando 3 domande sulle azioni possessorie (spoglio, animus spoliandi, spoglio 
 - 3 con "art. 1168" esplicito
 - art. 1168, 1169, 1170 presenti in `kb.normativa`
 
-**Root cause reale:** La hybrid search (dense + sparse + RRF) non le recupera.
-Da investigare: qualità embeddings, search query mismatch, o threshold troppo alti.
+**Root cause reale:** `kb_search.py` era completamente non funzionale a causa di 4 bug:
+
+1. **`model_name` mismatch** (CRITICO): SQL filtrava `e.model_name = 'text-embedding-3-small'`
+   ma il DB contiene `'openai/text-embedding-3-small'` → dense search restituiva 0 risultati per TUTTE le query
+2. **Embedding serialization** (CRITICO): Passava `list[float]` Python ad asyncpg che richiede
+   stringa `"[0.1,0.2,...]"` → hybrid search crashava con 500 error
+3. **`plainto_tsquery` AND logic** (ALTO): Query multi-termine richiedeva TUTTI i termini presenti →
+   "spoglio art 1168" = 0 risultati perché nessuna massima contiene tutti i termini
+4. **`litellm_embedding_model` errato** (CRITICO): Config aveva `"lexe-embedding"` (alias inesistente) →
+   embedding API restituiva 400, nessun embedding generato → solo sparse search (broken anch'esso per bug #3)
+
+**Effetto combinato:** 38,718 massime esistevano ma non venivano MAI restituite dalla search.
 
 - [x] ~~Import massime~~ → Non necessario, già presenti
-- [ ] **TODO:** Investigare perché `kb_search` non trova le massime possessorie
+- [x] **RISOLTO:** 4 bug critici fixati in `kb_search.py` e `config.py` (commits `0b9a75d`, `2109b2f`)
+- [x] Testato su staging: 4/4 query restituiscono 10 risultati in modalità **hybrid**
+- [x] Dense scores 0.60-0.71 (semantic similarity funzionante)
 
 #### B — Fallback web_search su KB miss (Applicata)
 Implementato in `advanced_orchestrator.py`: dopo la fase di ricerca parallela,
@@ -218,7 +230,7 @@ il confidence è cappato a 40%.
 è il collo di bottiglia, non la quantità di dati.
 
 - [x] Query distribuzione massime
-- [ ] **TODO:** Investigare search quality su massime possessorie
+- [x] Search quality investigata → Root cause trovata (vedi Fix A)
 
 #### E — NBA "Abilita ricerca web" (Nuova, Applicata)
 Quando la giurisprudenza manca, il sistema ora suggerisce "Abilita ricerca web per giurisprudenza"
@@ -228,4 +240,49 @@ come Next Best Action nel pannello LEXORC.
 
 ---
 
-*Ultimo aggiornamento: 2026-02-21*
+## BK-007 — kb_search completamente non funzionale (4 bug critici)
+
+**Severità:** Critical (RISOLTO)
+**Trovato da:** Investigazione BK-006 Fix A, 2026-02-22
+**Componente:** lexe-tools-it / kb_search.py, config.py
+
+### Problema (Risolto)
+
+`kb_search` (hybrid massime search) era completamente non funzionale su staging e production.
+38,718 massime esistevano nel DB ma non venivano mai restituite. 4 bug separati:
+
+| Bug | File | Descrizione | Effetto |
+|-----|------|-------------|---------|
+| model_name mismatch | kb_search.py:274 | `'text-embedding-3-small'` vs DB `'openai/text-embedding-3-small'` | Dense = 0 risultati |
+| Embedding serialization | kb_search.py:325 | `list[float]` non serializzabile da asyncpg | 500 error |
+| plainto_tsquery AND | kb_search.py:288,292 | Tutti i termini richiesti | Sparse = 0 per query complesse |
+| Config model name | config.py:71 | `"lexe-embedding"` (inesistente in LiteLLM) | Embedding API 400 |
+
+### Fix Applicate
+
+1. `e.model_name = 'openai/text-embedding-3-small'` (allineato al DB)
+2. `embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"` (serializzazione corretta)
+3. `websearch_to_tsquery` al posto di `plainto_tsquery` (OR-style matching)
+4. `litellm_embedding_model = "text-embedding-3-small"` (nome corretto)
+
+### Verifica
+
+Testato su staging 2026-02-22:
+
+| Query | Mode | Risultati | Latency |
+|-------|------|-----------|---------|
+| azione possessoria spoglio art 1168 | hybrid | 10 | 0.88s |
+| animus spoliandi prova in re ipsa | hybrid | 10 | 0.48s |
+| responsabilità art 2043 (control) | hybrid | 10 | 0.83s |
+| spoglio (simple) | hybrid | 10 | 0.49s |
+
+Dense scores 0.60-0.71. RRF fusion funzionante con contributi da entrambi dense e sparse.
+
+### Da Fare
+
+- [ ] Applicare stesse fix su production (`lexe-tools-it` config.py e kb_search.py)
+- [ ] Verificare che `normativa_kb_search.py` config.py model name sia allineato
+
+---
+
+*Ultimo aggiornamento: 2026-02-22*
