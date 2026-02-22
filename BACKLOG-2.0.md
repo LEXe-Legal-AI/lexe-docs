@@ -180,39 +180,51 @@ Testando 3 domande sulle azioni possessorie (spoglio, animus spoliandi, spoglio 
 | Prova animus spoliandi | 70% | art. 1168 OK | Non trovata | Non usato |
 | Animus in spoglio clandestino/violento | 30% | art. 1168 OK | Non trovata | Non usato |
 
-### Fix Proposte
+### Fix Applicate (2026-02-22)
 
-#### A — Arricchimento KB massime possessorie (P1)
-Importare massime di Cassazione su art. 1168, 1169, 1170 c.c. in `kb.massime`. Fonte: Brocardi, DeJure, o scraping mirato.
+#### A — KB ha già 1222 massime possessorie (Non serve import!)
+**Scoperta:** La KB contiene già massime rilevanti:
+- 52 massime con "spoglio"
+- 253 con "reintegrazione"
+- 914 con "possesso"
+- 3 con "art. 1168" esplicito
+- art. 1168, 1169, 1170 presenti in `kb.normativa`
 
-- [ ] Identificare fonte massime possessorie (Brocardi ha sezione dedicata)
-- [ ] Import in `kb.massime` con embeddings
-- [ ] Verificare retrieval su domande test
+**Root cause reale:** La hybrid search (dense + sparse + RRF) non le recupera.
+Da investigare: qualità embeddings, search query mismatch, o threshold troppo alti.
 
-#### B — Fallback web_search su KB miss (P1)
-Quando NormAgent/DoctrineAgent non trovano risultati sufficienti (confidence <50%), il Synthesizer dovrebbe attivare `web_search` come fallback automatico.
+- [x] ~~Import massime~~ → Non necessario, già presenti
+- [ ] **TODO:** Investigare perché `kb_search` non trova le massime possessorie
 
-- [ ] Aggiungere logica in LEXORC pipeline: se evidenze < soglia → trigger web_search
-- [ ] Integrare risultati web nel parere con disclaimer fonte
-- [ ] Aggiornare auditor per verificare anche fonti web
+#### B — Fallback web_search su KB miss (Applicata)
+Implementato in `advanced_orchestrator.py`: dopo la fase di ricerca parallela,
+se `case_law` e `massime` sono vuoti E `internet_opt_in=True`, viene eseguito
+automaticamente `web_search` come fallback con query giurisprudenziale.
 
-#### C — Confidence scoring calibration (P2)
-Il confidence non deve essere >50% se il sistema non ha contenuto giurisprudenziale da citare. Aggiungere regola:
+- [x] Logica fallback in orchestrator (Phase 3b)
+- [x] Risultati integrati come `CaseLawRef` con source="web_search"
+- [x] Log quando `internet_opt_in=False` per tracciabilità
+- [ ] **TODO:** Audit fonti web (confidence bassa per web_search)
 
-```
-Se giurisprudenza_trovata == 0 AND domanda richiede_giurisprudenza:
-    confidence = min(confidence, 40%)
-```
+#### C — Confidence scoring calibration (Applicata)
+Implementato in `scoring.py`: se non ci sono `case_law` né `massime` ma ci sono `norms`,
+il confidence è cappato a 40%.
 
-- [ ] Aggiungere post-processing confidence nel Synthesizer
-- [ ] Testare su batch di domande giurisprudenziali
+- [x] Cap 40% quando giurisprudenza assente in `compute_confidence()`
+- [x] Nota esplicita nel breakdown: "cap 40%: giurisprudenza assente"
 
-#### D — Gap analysis KB sistematica (P2)
-Mappare quali aree del diritto civile mancano nella KB per pianificare import mirati.
+#### D — Gap analysis KB sistematica (Completata)
+**Risultati:** 38,718 massime attive totali. La copertura è ampia ma il retrieval
+è il collo di bottiglia, non la quantità di dati.
 
-- [ ] Query su `kb.massime` per distribuzione articoli coperti
-- [ ] Confronto con indice codice civile per identificare gap
-- [ ] Prioritizzare: possessorio, obbligazioni, successioni, famiglia
+- [x] Query distribuzione massime
+- [ ] **TODO:** Investigare search quality su massime possessorie
+
+#### E — NBA "Abilita ricerca web" (Nuova, Applicata)
+Quando la giurisprudenza manca, il sistema ora suggerisce "Abilita ricerca web per giurisprudenza"
+come Next Best Action nel pannello LEXORC.
+
+- [x] Aggiunto in `generate_nba()` in `lexorc_synthesizer.py`
 
 ---
 
