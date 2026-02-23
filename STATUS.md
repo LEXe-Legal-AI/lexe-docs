@@ -254,9 +254,31 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
   - RLS tenant_isolation policy + updated_at trigger
 - [x] POST /v2/memory/context funzionante: intent classification + type-first/hybrid retrieval via RetrievalBrain
 
+### LLM Benchmark Phase 1 (2026-02-23)
+
+- [x] Benchmark: 6 run (FAST×3, COMPLEX×3), 11 modelli, 2 judge, peer-review
+- [x] Winner: `gemini-3-flash-preview` per fast/primary/complex roles
+- [x] `legis_verifier` → `legal-tier2-haiku` (Claude Haiku 4.5)
+- [x] `reasoning_effort` config applicato nel catalogo:
+  - gemini-3-flash-preview: `medium`, legal-tier2-haiku: `none`, gpt-5-mini: `low`, qwen3.5-plus: `medium`
+- [x] Documento scelte: `lexe-docs/llm-selection.md`
+- [x] Applicato su staging DB (`core.llm_model_catalog` + `core.model_role_defaults`)
+- [x] Runtime verificato: `config_utils.py:apply_config_override()` mappa reasoning_effort nel payload LiteLLM
+
 ---
 
 ## In Progress
+
+### Phase 2: Export & Frontend (2026-02-23)
+
+- [x] EventSink `_persist_event()` wired per 21 SSE event points (meta, preprocessing, tool_*, error, done)
+- [x] `conversation/export_router.py` — GET `/conversations/{id}/export` (json, md, html), 3 livelli (user/admin/global_admin)
+- [x] `conversation/html_renderer.py` — template standalone HTML con brand LEXE, print-ready
+- [x] `admin/routers/trace_router.py` — GET `/admin/trace/{hash}` con timeline eventi, messaggi, evaluations
+- [x] Router registrati in `main.py` (export + trace)
+- [x] Frontend: `traceHash` + `pipeline` in DebugInfo, ChatMessage, streamStore
+- [x] Frontend: `EvaluationStars` component (1-5 stelle, modal commento per rating bassi)
+- [x] Frontend: trace badge hash nel ChatMessage
 
 ### Admin Panel Frontend (Task #6)
 
@@ -320,4 +342,4 @@ Il tool (`normattiva.py`) usa `CODICI_PREDEFINITI[code]["urn_annex"]` per inseri
 
 ---
 
-*Ultimo aggiornamento: 2026-02-16*
+*Ultimo aggiornamento: 2026-02-23*
