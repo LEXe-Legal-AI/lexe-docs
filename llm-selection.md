@@ -1,21 +1,22 @@
 # LEXE - LLM Selection & Model Configuration
 
 > Scelte modelli LLM basate su benchmark Phase 1 (6 run, 11 modelli, 2 judge, peer-review)
-> *Ultimo aggiornamento: 2026-02-23*
+> **Stato: ATTIVO** — swap completato su staging (2026-03-12)
+> *Ultimo aggiornamento: 2026-03-12*
 
 ---
 
 ## 1. Modelli scelti per ruolo LEXE
 
-**Strategia: Gemini 3 Flash principale + DeepSeek/Qwen per fasi critiche**
+**Strategia: Gemini 3 Flash principale + Claude per verification/frontier**
 
 | Alias LiteLLM | Ruolo | Modello Scelto | reasoning_effort | max_tokens | Motivazione |
 |---|---|---|---|---|---|
-| `lexe-fast` | Fast (follow-up, classification) | `gemini-3-flash-preview` | `medium` | 1024 | Best score 4.75, 2.7-9s, $0.05/$0.30 |
-| `lexe-primary` | Primary (chat, consulenza) | `gemini-3-flash-preview` | `medium` | 8192 | Score 4.60, stabile, economico |
-| `lexe-complex` | Complex (LEGIS, planner) | `gemini-3-flash-preview` | `medium` | 8192 | Score 4.35, 10s, domina tutti i run |
-| `legal-tier2-haiku` | Verifier/audit | `claude-haiku-4.5` | `none` | 4096 | Veloce 3.6s, preciso, buon italiano |
-| `legal-tier3-sonnet` | Writing quality | `claude-sonnet-4.6` | default | 8192 | Eccellente italiano |
+| `lexe-fast` | Fast (follow-up, classification) | `gemini-3-flash-preview` | `medium` | 4096 | Best score 4.75, 2.7-9s, $0.05/$0.30 |
+| `lexe-primary` | Primary (chat, consulenza) | `gemini-3-flash-preview` | `medium` | 16384 | Score 4.60, stabile, economico |
+| `lexe-complex` | Complex (LEGIS, planner) | `gemini-3-flash-preview` | `medium` | 16384 | Score 4.35, 10s, domina tutti i run |
+| `lexe-verifier` | Verifier/audit | `gemini-3-flash-preview` | `low` | 8192 | Fast verification, reasoning leggero |
+| `lexe-frontier` | Writing quality | `gemini-3-flash-preview` | `high` | 16384 | Max quality scrittura legale |
 | `lexe-embedding` | Embedding | `text-embedding-3-small` | N/A | N/A | Invariato |
 
 ---
