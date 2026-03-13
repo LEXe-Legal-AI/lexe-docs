@@ -4,7 +4,7 @@
 
 ---
 
-## Infrastructure Status (2026-02-13)
+## Infrastructure Status (2026-03-13)
 
 ### Production (49.12.85.92)
 
@@ -12,18 +12,19 @@
 | ----------------- | ------- | ---------------------------------------------- |
 | lexe-core         | Healthy | Gateway + Auth OIDC + Admin API                |
 | lexe-orchestrator | Healthy | ORCHIDEA Pipeline (FF disabled)                |
-| lexe-memory       | Healthy | L1-L3 Memory                                   |
+| lexe-memory       | Healthy | L1-L3 Memory (porta 8103)                      |
 | lexe-webchat      | Healthy | Frontend chat                                  |
+| lexe-admin        | Healthy | Admin panel SPA                                |
 | lexe-logto        | Healthy | CIAM Auth                                      |
-| lexe-litellm      | Healthy | LLM Gateway                                    |
-| lexe-postgres     | Healthy | DB + pgvector                                  |
+| lexe-litellm      | Healthy | LLM Gateway (20 models synced)                 |
+| lexe-postgres     | Healthy | DB + pgvector (porta 5435)                     |
 | lexe-valkey       | Healthy | Cache L1                                       |
 | lexe-max          | Healthy | KB Legal (normativa, massime, embeddings)      |
 | lexe-tools        | Healthy | Legal Tools API (Normattiva, EUR-Lex, InfoLex) |
 | lexe-temporal     | Healthy | Workflow orchestration                         |
 | lexe-temporal-ui  | Healthy | Temporal dashboard                             |
 
-**Total:** 12 containers
+**Total:** 13 containers
 
 ### Staging (91.99.229.111)
 
@@ -31,6 +32,7 @@
 | ------------- | ------- | ------------------------------ |
 | lexe-core     | Healthy | stage branch                   |
 | lexe-webchat  | Healthy | Built from source via override |
+| lexe-admin    | Healthy | Admin panel SPA                |
 | lexe-logto    | Healthy | ENDPOINT=auth.stage.lexe.pro   |
 | lexe-litellm  | Healthy |                                |
 | lexe-tools    | Healthy |                                |
@@ -41,16 +43,106 @@
 
 ---
 
+## Current Sprint: Sprint 9 (2026-03-12/13)
+
+### Orchestration v2 -- Phase 3d Complete
+
+- [x] 3-layer architecture: orchestration > gateway > agent
+- [x] Native strategies: toolloop, legis, super_tool, lexorc
+- [x] Per-capability degradation policies (fallback, retries, timeout, circuit breaker, skip_on_failure)
+- [x] DomainEvent hierarchy (17 event types)
+- [x] TurnContext dataclass with ToolKit, LLMClient, PipelineRunner protocols
+- [x] Architecture boundary enforcement tests
+- [x] `RawSSEEvent` deprecated (backward compat only)
+- [x] **71 tests passing**
+
+### Multi-Agent Research "La Bomba"
+
+- [x] Intent decomposer: query → WorkPlan with SubTasks (FF `ff_multi_agent_research`)
+- [x] Research engine: 3-wave parallel (Norm+Juris+Doctrine → Vigenza+Gap → Remediation)
+- [x] 5 research agents: norm_v2, juris, doctrine_v2, vigenza, gap_analyst
+- [x] Evidence fusion: dedup by URN/RV, confidence boost (multi-source +5%, cross-ref +5%)
+- [x] Budget by complexity: SIMPLE=12, STANDARD=22, COMPLEX=35
+
+### Confidence Scoring
+
+- [x] BK-006 Fix: removed penalty for absent jurisprudence (not a verification gate)
+- [x] 3-band thresholds: VERIFIED ≥45, CAUTION 25-44, LOW_CONFIDENCE <25
+- [x] Follow-ups: always emit 3 suggestions, regex fallback for JSON parse failures
+- [x] Quality metrics: Prometheus histograms for evidence, confidence, tools, pipeline duration
+
+### Citation Badges (Frontend)
+
+- [x] Interactive `[N]` badges with tooltip popovers (portal-based, 3 types)
+- [x] Click → highlight evidence item in panel, auto-scroll, 2.5s ring effect
+- [x] BUG FIX: `selectCitationMap` infinite re-render (React #185) — use inline selector
+
+### Admin Panel Sprint 5
+
+- [x] Unified "Modelli & Alias" tab (Gateway + Catalogo merged)
+- [x] RuoliTab: compact accordion layout, test button, read-only chips
+- [x] Tools AI group with `globalOnly` badge
+- [x] i18n: eliminated hardcoded Italian strings
+- [x] Brand Kit v2.2: real LEXe bicolor logos, fixed dark/light variant detection
+
+### Tenant Resolution
+
+- [x] Sub-based fallback when JWT org_id missing
+- [x] Auto-heal: re-add user to Logto org
+- [x] TTL cache (5 min) for org→tenant lookups
+
+### Tools AI Model Roles
+
+- [x] Migration 030: 6 `tool_*` roles (role_group='tools', globalOnly)
+- [x] Migration 031: `lexe-embedding` alias fix (was wrongly set to gemini)
+
+### LLM Model Consolidation
+
+All 6 primary model aliases now point to **Gemini 3 Flash Preview**:
+
+| Alias           | Reasoning Effort | Max Tokens | Role                |
+|-----------------|------------------|------------|---------------------|
+| `lexe-fast`     | medium           | 4,096      | Intent detection    |
+| `lexe-primary`  | medium           | 16,384     | Synthesis           |
+| `lexe-complex`  | medium           | 16,384     | Planning            |
+| `lexe-verifier` | low              | 8,192      | Verification        |
+| `lexe-frontier` | high             | 16,384     | Max quality writing |
+| `lexe-embedding`| --               | --         | text-embedding-3-small |
+
+**LiteLLM:** 20 models synced between staging and production (including gpt-5-mini, qwen3.5-plus, deepseek-v3.2, sonnet-4-6, gemini-3.1-pro, grok-4-1-fast, mimo-v2-flash).
+
+### Production Deploy (2026-02-23)
+
+- [x] All 7 repos merged stage to main and deployed
+- [x] 13 containers healthy on prod
+- [x] Migrations 018-025 applied on prod (LEXORC roles, model groups, super_tool_runs, conversation_events, message_evaluations)
+- [x] Logto OIDC working on auth.lexe.pro, new app `lexe-admin-spa`
+- [x] DNS: admin.lexe.pro configured
+
+### KB Stats (Production)
+
+| Metric                 | Count   |
+|------------------------|---------|
+| Articles (normativa)   | 13,397  |
+| Chunks + embeddings    | 17,343  |
+| Massime                | 46,767  |
+| Codici                 | 95      |
+| Norms (shared)         | 4,128   |
+| Graph edges (CITES)    | 58,737  |
+
+---
+
 ## Services URLs
 
 ### Production
 
-| Service     | URL                   | Status |
-| ----------- | --------------------- | ------ |
-| Webchat     | https://ai.lexe.pro   | OK     |
-| API         | https://api.lexe.pro  | OK     |
-| Auth OIDC   | https://auth.lexe.pro | OK     |
-| LLM Gateway | https://llm.lexe.pro  | OK     |
+| Service     | URL                    | Status |
+| ----------- | ---------------------- | ------ |
+| Webchat     | https://ai.lexe.pro    | OK     |
+| API         | https://api.lexe.pro   | OK     |
+| Auth OIDC   | https://auth.lexe.pro  | OK     |
+| Admin Panel | https://admin.lexe.pro | OK     |
+| LLM Gateway | https://llm.lexe.pro   | OK     |
 
 ### Staging
 
@@ -79,7 +171,45 @@ cd /opt/lexe-platform/lexe-infra
 docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up -d
 ```
 
-> **CRITICO:** L'override file è OBBLIGATORIO. Senza override, Traefik labels mancano e Logto/lexe-core puntano all'ambiente sbagliato.
+> **CRITICO:** L'override file e' OBBLIGATORIO. Senza override, Traefik labels mancano e Logto/lexe-core puntano all'ambiente sbagliato.
+
+---
+
+## Architecture: Orchestration v2
+
+3-layer architecture with clean separation of concerns:
+
+```
+Orchestration Layer    contracts, events, strategy, orchestrator, decomposer
+        |
+   DomainEvents
+        |
+Gateway Layer          adapters (ToolKit, LLMClient, PipelineRunner), SSE translation
+        |
+   Tool/LLM calls
+        |
+Agent Layer            intent_detector, planner, research_engine (5 agents), verifier, synthesizer, scoring, fusion
+```
+
+**Strategies:**
+
+| Strategy   | Intents         | Description                        |
+|------------|-----------------|------------------------------------|
+| toolloop   | CHAT, DIRECT    | Direct LLM with optional tools     |
+| legis      | SIMPLE, STANDARD| Full LEGIS pipeline (4 phases)     |
+| super_tool | Experimental    | Super tool execution               |
+| lexorc     | COMPLEX         | Multi-agent orchestration          |
+
+**LEGIS Degradation Policy:**
+
+| Capability  | Fallback      | Retries | Timeout | Circuit Breaker | Skip |
+|-------------|---------------|---------|---------|-----------------|------|
+| planner     | direct_plan   | 1       | 15s     | --              | no   |
+| researcher  | --            | 2       | 30s     | 5               | no   |
+| verifier    | --            | 0       | 10s     | --              | yes  |
+| synthesizer | --            | 1       | 60s     | --              | no   |
+
+See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture documentation.
 
 ---
 
@@ -89,14 +219,14 @@ docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up -d
 
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `core`   | tenants, contacts, conversations, conversation_messages, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions | Multi-tenant con RLS |
-| `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking | pgvector 1536d, RLS 8 tabelle |
+| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults | Multi-tenant con RLS, migrations 001-031 |
+| `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking, semantic_vectors_v2 | pgvector 1536d, RLS 8 tabelle |
 
 ### lexe-max (KB Legal)
 
 | Schema | Tabelle                                                                                 | Note             |
 | ------ | --------------------------------------------------------------------------------------- | ---------------- |
-| `kb`   | normativa (6,335), normativa_chunk (10,246), annotation (13,281), work (69), embeddings | Asset principale |
+| `kb`   | normativa (13,397), normativa_chunk (17,343), annotation, work (95), embeddings, massime (46,767) | Asset principale |
 
 ---
 
@@ -139,155 +269,91 @@ docker compose -f docker-compose.yml -f docker-compose.override.prod.yml up -d
 ### WS8: UX Fixes (2026-02-13)
 
 - [x] Follow-up suggestions: prompt corretto per generare domande dal POV utente
-- [x] Indagine Normattiva permalink: confermato che deep-link a singolo articolo NON è supportato
+- [x] Indagine Normattiva permalink: confermato che deep-link a singolo articolo NON e' supportato
 
-### Admin Panel Backend (2026-02-13)
+### Admin Panel (2026-02-13 -- 2026-02-23)
 
 - [x] 33 endpoints REST montati su /api/v1/admin
 - [x] RBAC: 6 ruoli (superadmin, admin, agent, operator, user, viewer)
 - [x] Audit log con tenant isolation
 - [x] FF_STRICT_TENANT_NO_FALLBACK=true
-
----
-
-## Architettura Auth
-
-### Logto OIDC Flow
-
-```
-Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
-  → JWT con organization_id claim
-  → lexe-core valida: issuer + audience (api.stage.lexe.pro)
-  → risolve tenant via core.tenants.logto_organization_id
-```
-
-### Staging Logto Config
-
-| Parametro    | Valore                               |
-| ------------ | ------------------------------------ |
-| App ID       | dbj6ca04zxzwz7m61aww3                |
-| App Name     | LEXE Webchat STAGE                   |
-| Redirect URI | https://stage-chat.lexe.pro/callback |
-| API Resource | https://api.stage.lexe.pro           |
-| Organization | lexe-default-stage                   |
-| Tenant UUID  | 67a08dc0-4677-423d-b962-f890c6d6b5a9 |
-
-### lexe-memory Sprint 1: Router Mounting + Security (2026-02-14)
-
-- [x] Tutti i router registrati in main.py (delta, profile, context, rag, routes, gateway)
-- [x] Rate limiting su tutti gli endpoint (100/min default, 20/min su store/search)
-- [x] X-Tenant-ID header validation
-- [x] try/except per import opzionali (profile, rag) — graceful degradation
-- [x] `GET /openapi.json` espone tutti i 40+ endpoint
-- [x] Health checks L0-L4 in /health response
-
-### lexe-memory Sprint 2: Delta Writeback L0/L1 (2026-02-15)
-
-- [x] `apply_delta()`: writeback reale su L0 (session) e L1 (persistent)
-  - `sync_l0_only` + conversation_id → facts in L0
-  - `sync_l0_only` senza conversation → facts in L1
-  - `async_full` → facts in L0 **e** L1
-  - Preferences → sempre L1
-- [x] Anti-feedback loop: blocca contenuto negativo (20 pattern IT/EN/PT)
-- [x] Idempotency tracking via request_id (OrderedDict bounded 10k)
-- [x] `get_by_request_id()`: delta status da idempotency cache
-- [x] `get_summary()`: template-based da L1+L2 (no LLM, Sprint 4)
-- [x] `get_resolution_log()`: log ADD/DELETE con cursor pagination
-- [x] Intelligence metrics: facts_analyzed, facts_blocked, deltas_tracked
-- [x] 25 unit tests (mock MemoryService, no DB)
-
-### lexe-memory Sprint 3: Brainprint Profile (2026-02-14)
-
-- [x] Migration 004: `memory.profiles`, `memory.profile_facts`, `memory.fact_history`
-  - Unique partial index `(profile_id, key) WHERE is_valid = true` per dedup
-  - Trigger `set_updated_at()` automatico
-  - `tenant_id` su tutte e 3 le tabelle (RLS-ready)
-- [x] `profile/schemas.py`: 12 Pydantic v2 models (ProfileResponse, FactCandidate, ExtractionInput, ...)
-- [x] `profile/service.py`: ProfileService con dedup key-based
-  - get_profile (NO auto-create), get_or_create_profile, add_fact (confirm/supersede/keep)
-  - update_fact, invalidate_fact, get_profile_summary (template), get_profile_history
-- [x] `profile/extractor.py`: FactExtractionProvider protocol
-  - HeuristicExtractor: 12 regex IT/EN/PT, confidence scoring, uncertainty penalty
-  - LLMExtractor: via LiteLLM `lexe-fast`, JSON strict + whitelist, OFF by default
-  - ALLOWED_KEYS whitelist per 5 categorie (identity, preference, relation, context, behavior)
-- [x] `profile/evolver.py`: orchestra extraction → persistence via add_fact()
-- [x] Config: 8 nuovi settings per fact extractor
-- [x] 23 unit tests (HeuristicExtractor, schemas, factory)
-- [x] E2E su staging: 404 (no auto-create) → 201 (add_fact) → confirm → supersede → history
-
-### lexe-memory Sprint 4: DB Idempotency + LLM Summaries + RLS (2026-02-16)
-
-- [x] Migration 005: `memory.delta_tracking` table
-  - `UNIQUE (tenant_id, request_id)` per-tenant idempotency
-  - Status enum: `in_progress` → `completed` | `failed`
-  - `cleanup_old_deltas(retention_days)` function
-  - 3 indexes (composite request, processed_at DESC, partial status)
-- [x] Migration 006: RLS policies su 8 tabelle memory
-  - `memory.fn_get_tenant_id()` + `memory.fn_is_superadmin()` helpers
-  - `tenant_isolation` policy on: episodic_vectors, semantic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking
-  - Defense-in-depth (lexe user is SUPERUSER → RLS bypassed)
-- [x] DB-backed idempotency in DeltaService
-  - `init_db()` → engine + session factory (lazy, first delta call)
-  - `_warm_cache()`: 24h window + max 50K entries (most restrictive wins)
-  - Flow: cache check → DB insert `in_progress` → process → `completed`/`failed`
-  - `get_by_request_id(request_id, tenant_id)`: cache → DB fallback
-  - Survives container restarts (warm cache from DB)
-- [x] LLM Summary module (`llm_summary.py`)
-  - `_call_litellm()`: POST to LiteLLM gateway via httpx
-  - `generate_memory_summary_llm()` + `generate_profile_summary_llm()`
-  - Guard rails: 4000 char input max, prose-only output (no bullets)
-  - Feature flag: `FF_LLM_SUMMARY` (default false)
-  - Latency logging: `method=llm/template latency_ms=X`
-- [x] LLM summary integration in DeltaService.get_summary() and ProfileService.get_profile_summary() with template fallback
-- [x] Reason-code logging: `L0 skipped: no conversation_id`, `L1 skipped: sync_l0_only mode`
-- [x] Config: 5 new settings (ff_llm_summary, llm_summary_model/max_tokens/timeout, litellm_api_key)
-- [x] Summary endpoint fix: `tenant_id` query param for scoped L1/L2 retrieval
-- [x] 26 new tests (82 total, all passing)
-- [x] E2E verified on staging: idempotency, warm cache after restart, reason-code logs, summary
-
-### lexe-memory Sprint 4 Fix: Migration 007 (2026-02-16)
-
-- [x] **Migration 007**: `memory.set_rls_context_v2(TEXT, TEXT)` + `memory.semantic_vectors_v2` table
-  - Function sets `app.tenant_id` + `app.owner_id` via `set_config()` (transaction-local)
-  - Table: owner_id RLS, request_id idempotency, content_hash dedup, dual tsvector (simple + italian)
-  - 11 indexes including GIN for FTS hybrid search
-  - RLS tenant_isolation policy + updated_at trigger
-- [x] POST /v2/memory/context funzionante: intent classification + type-first/hybrid retrieval via RetrievalBrain
+- [x] Frontend React SPA (lexe-admin)
+- [x] Dashboard con 10 sezioni, 27 componenti
+- [x] CRUD Personas, gestione utenti/ruoli
+- [x] Deployed to prod as lexe-admin container
 
 ### LLM Benchmark Phase 1 (2026-02-23)
 
-- [x] Benchmark: 6 run (FAST×3, COMPLEX×3), 11 modelli, 2 judge, peer-review
+- [x] Benchmark: 6 run (FAST x 3, COMPLEX x 3), 11 modelli, 2 judge, peer-review
 - [x] Winner: `gemini-3-flash-preview` per fast/primary/complex roles
-- [x] `legis_verifier` → `legal-tier2-haiku` (Claude Haiku 4.5)
-- [x] `reasoning_effort` config applicato nel catalogo:
-  - gemini-3-flash-preview: `medium`, legal-tier2-haiku: `none`, gpt-5-mini: `low`, qwen3.5-plus: `medium`
-- [x] Documento scelte: `lexe-docs/llm-selection.md`
-- [x] Applicato su staging DB (`core.llm_model_catalog` + `core.model_role_defaults`)
+- [x] `reasoning_effort` config applicato nel catalogo
 - [x] Runtime verificato: `config_utils.py:apply_config_override()` mappa reasoning_effort nel payload LiteLLM
+
+### Auto-Improve Phase 2: Export + Eval (2026-02-23)
+
+- [x] EventSink `_persist_event()` wired per 21 SSE event points
+- [x] Export router: GET `/conversations/{id}/export` (json, md, html)
+- [x] HTML renderer: standalone branded HTML
+- [x] Trace router: GET `/admin/trace/{hash}` with timeline
+- [x] Frontend: EvaluationStars, trace badge, evaluation API
+
+### Auto-Improve Phase 3: Dashboards (2026-02-23)
+
+- [x] Prometheus scraping `lexe-core:8100`, 5 alert rules
+- [x] Grafana dashboard uid `lexe-operations`, 8 panels
+- [x] Assessment endpoint: GET `/admin/assessment?period=1d|7d|30d`
+- [x] SLA persistence: hybrid in-memory + DB (cached 60s)
+
+### Orchestration v2 (2026-03-12)
+
+- [x] **Phase 0**: 14 modules, 6 endpoints in lexe-tools-it/capabilities/
+- [x] **Phase 1**: 7 modules extracted from customer_router.py (3357 to 2739 LOC)
+- [x] **Phase 2a-2c**: orchestration/ package (contracts, events, strategy, decomposer, orchestrator, 4 bridge strategies)
+- [x] **Phase 2d**: gateway/adapters.py, wire TurnContext, ff_orchestration_v2
+- [x] **Phase 3a**: Native ToolloopStrategy (ToolKit/LLMClient protocols, circuit breaker)
+- [x] **Phase 3b+3c**: Native Legis/SuperTool/Lexorc (PipelineRunner protocol, SSE parser)
+- [x] **Phase 3d**: Per-capability degradation + RawSSEEvent deprecated, 71/71 tests passing
+
+### Sprint 9: Multi-Agent + Citations + Admin UI (2026-03-12/13)
+
+- [x] Orchestration v2 Phase 3a-3d: Native strategies, per-capability degradation, 71 tests
+- [x] Multi-Agent Research "La Bomba": 5 agents, 3-wave parallel, evidence fusion
+- [x] Confidence scoring: 3-band (45/25), removed jurisprudence penalty, Prometheus metrics
+- [x] Citation badges: interactive [N] with tooltip popovers, click→highlight, BUG FIX #185
+- [x] Tenant resolver: sub-based fallback, auto-heal org, TTL cache
+- [x] Migrations 030-031: Tools AI roles + embedding alias fix
+- [x] Admin Sprint 5: unified "Modelli & Alias", RuoliTab accordion, Tools AI globalOnly, Brand Kit v2.2, i18n
+- [x] Quality metrics: Prometheus histograms (evidence, confidence, tools, pipeline duration)
+
+### lexe-memory Sprints 1-4 (2026-02-14 -- 2026-02-16)
+
+- [x] Router mounting + security + rate limiting
+- [x] Delta writeback L0/L1 with anti-feedback loop
+- [x] Brainprint profile (extraction, dedup, evolution)
+- [x] DB idempotency + LLM summaries + RLS (migrations 004-007)
+- [x] 82 total tests passing
 
 ---
 
 ## In Progress
 
-### Phase 2: Export & Frontend (2026-02-23)
+### Multi-Agent Research Validation
 
-- [x] EventSink `_persist_event()` wired per 21 SSE event points (meta, preprocessing, tool_*, error, done)
-- [x] `conversation/export_router.py` — GET `/conversations/{id}/export` (json, md, html), 3 livelli (user/admin/global_admin)
-- [x] `conversation/html_renderer.py` — template standalone HTML con brand LEXE, print-ready
-- [x] `admin/routers/trace_router.py` — GET `/admin/trace/{hash}` con timeline eventi, messaggi, evaluations
-- [x] Router registrati in `main.py` (export + trace)
-- [x] Frontend: `traceHash` + `pipeline` in DebugInfo, ChatMessage, streamStore
-- [x] Frontend: `EvaluationStars` component (1-5 stelle, modal commento per rating bassi)
-- [x] Frontend: trace badge hash nel ChatMessage
+- [ ] Enable `ff_multi_agent_research` on staging test tenant
+- [ ] E2E test with real legal queries (RICERCA, PARERE, CONTENZIOSO, CONTRATTO)
+- [ ] Validate 3-wave execution and evidence fusion quality
 
-### Admin Panel Frontend (Task #6)
+### Orchestration v2 Rollout
 
-- [x] Scaffolding React (in lexe-webchat, non repo separato)
-- [x] Dashboard con 10 sezioni, 27 componenti
-- [x] CRUD Personas
-- [x] Gestione utenti/ruoli
-- [x] Audit log viewer
-- [ ] Configurazione modelli LLM per tenant
+- [ ] Enable `ff_orchestration_v2` beyond test tenant
+- [ ] Degradation policy configuration UI in admin panel
+- [ ] Per-capability metrics display in admin
+
+### Pending Items
+
+- [ ] `ff_lexorc_enabled` activation for production
+- [ ] Chat persistence in Logto mode (GET /gateway/customer/conversations/{id}/messages)
+- [ ] Admin panel: ApiHealthPage, AuditPage, Command Palette
 
 ---
 
@@ -300,6 +366,10 @@ Browser → stage-chat.lexe.pro → Logto (auth.stage.lexe.pro)
 | Let's Encrypt rate limit                | Minor  | Alcuni domini legacy (play.lexe.pro, leo.itconsultingsrl.com) in rate limit                                                   |
 | 404 su /api/v1/identity/access-requests | Open   | Endpoint LEO-specific, rimuovere da webchat                                                                                   |
 | 500 su /v2/memory/context               | Fixed  | set_rls_context_v2() e semantic_vectors_v2 mancanti. Migration 007 crea entrambi                                              |
+| CitationBadge infinite re-render #185   | Fixed  | `selectCitationMap` crea nuovo Map ad ogni render → loop infinito. Fix: inline selector `s.evidenceItems[index-1]`            |
+| JWT missing org_id → 401                | Fixed  | Sub-based fallback lookup in tenant_resolver.py + auto-heal org membership                                                    |
+| Low confidence when jurisprudence absent| Fixed  | Removed penalty — confidence = norm verification only, jurisprudence is informational enrichment                                |
+| Chat lost after crash in Logto mode     | Open   | Frontend Logto mode skips loading messages from server. Need GET /conversations/{id}/messages endpoint                         |
 
 ---
 
@@ -342,4 +412,28 @@ Il tool (`normattiva.py`) usa `CODICI_PREDEFINITI[code]["urn_annex"]` per inseri
 
 ---
 
-*Ultimo aggiornamento: 2026-02-23*
+## Architettura Auth
+
+### Logto OIDC Flow
+
+```
+Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
+  -> JWT con organization_id claim
+  -> lexe-core valida: issuer + audience (api.stage.lexe.pro)
+  -> risolve tenant via core.tenants.logto_organization_id
+```
+
+### Staging Logto Config
+
+| Parametro    | Valore                               |
+| ------------ | ------------------------------------ |
+| App ID       | dbj6ca04zxzwz7m61aww3                |
+| App Name     | LEXE Webchat STAGE                   |
+| Redirect URI | https://stage-chat.lexe.pro/callback |
+| API Resource | https://api.stage.lexe.pro           |
+| Organization | lexe-default-stage                   |
+| Tenant UUID  | 67a08dc0-4677-423d-b962-f890c6d6b5a9 |
+
+---
+
+*Ultimo aggiornamento: 2026-03-13*
