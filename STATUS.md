@@ -43,7 +43,36 @@
 
 ---
 
-## Current Sprint: Sprint 9 (2026-03-12/13)
+## Current Sprint: Sprint 10 — Pipeline v2 Restructuring (2026-03-15)
+
+### Pipeline v2 — Unified Legal Pipeline
+- [x] Binary routing: chat->toolloop, legal->LegalStrategy (was 4 strategies)
+- [x] DepthLevel (MINIMAL/STANDARD/DEEP) replaces 5-level PipelineLevel
+- [x] 3 new scenarios: NDA_TRIAGE, COMPLIANCE_CHECK, RISK_ASSESSMENT
+- [x] unified_pipeline.py: single entry point, depth-based budget
+- [x] LegalStrategy: unified strategy replacing legis+lexorc+super_tool
+- [x] gap_reporter.py: research gap analysis for synthesizer
+- [x] depth_budget.py: budget config per DepthLevel
+- [x] Super Tool disconnected from routing (files retained)
+- [x] legis/lexorc strategies deprecated (files retained)
+- [x] **73/73 orchestration tests, 544/560 total**
+
+### Prompt Enrichment (Interventions A-G)
+- [x] A: Contract Review Playbook (13 clauses, redline format)
+- [x] B: NDA Triage (10-point checklist, GREEN/YELLOW/RED)
+- [x] C: Escalation Triggers (8 universal + scenario-specific)
+- [x] D: Authority Scoring (classify_authority, 5 weights)
+- [x] E: DPA Checklist (18-item Art. 28 GDPR)
+- [x] F: Gap Reporting ({research_gaps} placeholder)
+- [x] G: Risk Matrix (5x5, unified Italian definitions)
+
+### Tool Improvements
+- [x] P2: kb_search — anno_min, anno_max, sezione filters
+- [x] P4: normattiva_search vs kb_normativa_search descriptions clarified
+
+---
+
+## Previous Sprint: Sprint 9 (2026-03-12/13)
 
 ### Orchestration v2 -- Phase 3d Complete
 
@@ -191,23 +220,24 @@ Gateway Layer          adapters (ToolKit, LLMClient, PipelineRunner), SSE transl
 Agent Layer            intent_detector, planner, research_engine (5 agents), verifier, synthesizer, scoring, fusion
 ```
 
-**Strategies:**
+**Strategies (v2 — binary routing):**
 
-| Strategy   | Intents         | Description                        |
-|------------|-----------------|------------------------------------|
-| toolloop   | CHAT, DIRECT    | Direct LLM with optional tools     |
-| legis      | SIMPLE, STANDARD| Full LEGIS pipeline (4 phases)     |
-| super_tool | Experimental    | Super tool execution               |
-| lexorc     | COMPLEX         | Multi-agent orchestration          |
+| Strategy | Intents              | Description                                  |
+|----------|----------------------|----------------------------------------------|
+| toolloop | CHAT (non-legal)     | Direct LLM with optional tools               |
+| legal    | All legal scenarios  | Unified legal pipeline (depth-based budget)   |
 
-**LEGIS Degradation Policy:**
+**DepthLevel Budget:**
 
-| Capability  | Fallback      | Retries | Timeout | Circuit Breaker | Skip |
-|-------------|---------------|---------|---------|-----------------|------|
-| planner     | direct_plan   | 1       | 15s     | --              | no   |
-| researcher  | --            | 2       | 30s     | 5               | no   |
-| verifier    | --            | 0       | 10s     | --              | yes  |
-| synthesizer | --            | 1       | 60s     | --              | no   |
+| Depth    | Tool Calls | Waves | Timeout | Planner       | Verifier | Self-Correct |
+|----------|------------|-------|---------|---------------|----------|--------------|
+| MINIMAL  | 8          | 1     | 20s     | deterministic | no       | no           |
+| STANDARD | 20         | 2     | 35s     | lexe-fast     | yes      | no           |
+| DEEP     | 35         | 3     | 50s     | lexe-frontier | yes      | yes          |
+
+**Deprecated (files retained, disconnected from routing):**
+- `strategies/legis.py`, `strategies/lexorc.py`, `strategies/super_tool.py`
+- `agent/super_tool.py` + related files
 
 See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture documentation.
 
@@ -337,22 +367,15 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 
 ## In Progress
 
-### Multi-Agent Research Validation
-
-- [ ] Enable `ff_multi_agent_research` on staging test tenant
-- [ ] E2E test with real legal queries (RICERCA, PARERE, CONTENZIOSO, CONTRATTO)
-- [ ] Validate 3-wave execution and evidence fusion quality
-
-### Orchestration v2 Rollout
-
-- [ ] Enable `ff_orchestration_v2` beyond test tenant
-- [ ] Degradation policy configuration UI in admin panel
-- [ ] Per-capability metrics display in admin
+### Pipeline v2 Staging Validation
+- [ ] Deploy pipeline v2 changes to staging
+- [ ] E2E test: MINIMAL/STANDARD/DEEP depth routing
+- [ ] E2E test: NDA_TRIAGE, COMPLIANCE_CHECK, RISK_ASSESSMENT scenarios
+- [ ] Validate authority scoring with real massime
 
 ### Pending Items
-
-- [ ] `ff_lexorc_enabled` activation for production
-- [ ] Chat persistence in Logto mode (GET /gateway/customer/conversations/{id}/messages)
+- [ ] Chat persistence in Logto mode
+- [ ] Admin panel: degradation policy config UI
 - [ ] Admin panel: ApiHealthPage, AuditPage, Command Palette
 
 ---
@@ -436,4 +459,4 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 ---
 
-*Ultimo aggiornamento: 2026-03-13*
+*Ultimo aggiornamento: 2026-03-15*
