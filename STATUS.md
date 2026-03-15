@@ -4,7 +4,7 @@
 
 ---
 
-## Infrastructure Status (2026-03-13)
+## Infrastructure Status (2026-03-15)
 
 ### Production (49.12.85.92)
 
@@ -43,7 +43,7 @@
 
 ---
 
-## Current Sprint: Sprint 10 — Pipeline v2 Restructuring (2026-03-15)
+## Current Sprint: Sprint 10 — Pipeline v2 + Evidence Quality (2026-03-15)
 
 ### Pipeline v2 — Unified Legal Pipeline
 - [x] Binary routing: chat->toolloop, legal->LegalStrategy (was 4 strategies)
@@ -69,6 +69,28 @@
 ### Tool Improvements
 - [x] P2: kb_search — anno_min, anno_max, sezione filters
 - [x] P4: normattiva_search vs kb_normativa_search descriptions clarified
+
+### Massimario Links — Multi-Format Search + No Fallback (2026-03-15)
+- [x] Removed Google/SearXNG fallback URL generation — return "" when no authoritative URL found
+- [x] Multi-format search `_search_massima_multi()`: 3 strategies in cascade per RV, 2 per sentenza
+  - Strategy 1: Exact "Rv. N" with site restriction (dejure, brocardi, altalex, cortedicassazione, studiocataldi)
+  - Strategy 2: Compact format ("rv645132", "Rv.645132") + cassazione context
+  - Strategy 3: Bare number + cassazione massima sentenza
+- [x] Negative caching (24h TTL, `__NONE__` sentinel) — prevents repeated SearXNG queries for unfindable massime
+- [x] Removed dead code: `_build_search_fallback()`, `_build_search_query()`
+- [x] Fixed bug: `researcher.py` imported deleted `_build_search_fallback` (silent ImportError)
+- [x] Frontend: "Fonte interna" shown when no URL (already handled by CitationBadge)
+- [x] Confidence: url_tier=0 naturally reduces link_verification score (20% weight)
+- [x] **18/18 tests passing**
+
+### Document Attachments (2026-03-15)
+- [x] Upload pipeline: DOCX/PDF extraction, context injection into conversation
+- [x] Migration 035: `core.attachments` table
+- [x] Frontend: document upload flow with char count display
+
+### KB Concept Hierarchy (lexe-max Sprint 10 F2)
+- [x] Migration 080: concept hierarchy for normativa retrieval
+- [x] `populate_concept_hierarchy.py` script
 
 ---
 
@@ -249,7 +271,7 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults | Multi-tenant con RLS, migrations 001-031 |
+| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults, attachments | Multi-tenant con RLS, migrations 001-035 |
 | `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking, semantic_vectors_v2 | pgvector 1536d, RLS 8 tabelle |
 
 ### lexe-max (KB Legal)
@@ -368,10 +390,16 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 ## In Progress
 
 ### Pipeline v2 Staging Validation
-- [ ] Deploy pipeline v2 changes to staging
+- [x] Deploy pipeline v2 changes to staging (ff_orchestration_v2 enabled globally)
 - [ ] E2E test: MINIMAL/STANDARD/DEEP depth routing
 - [ ] E2E test: NDA_TRIAGE, COMPLIANCE_CHECK, RISK_ASSESSMENT scenarios
-- [ ] Validate authority scoring with real massime
+- [x] Validate authority scoring with real massime (massimario multi-format search deployed)
+
+### Evidence URL Persistence (Planned)
+- [ ] Migration: add `source_url TEXT` to `kb.massime` and `kb.sentenza`
+- [ ] LLM-validated URL write-back to KB (resolve → HTTP HEAD → LLM verify → persist)
+- [ ] Read-first: skip SearXNG if KB already has source_url
+- [ ] Same flow for giurisprudenza (case_law)
 
 ### Pending Items
 - [ ] Chat persistence in Logto mode
@@ -456,6 +484,16 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 | API Resource | https://api.stage.lexe.pro           |
 | Organization | lexe-default-stage                   |
 | Tenant UUID  | 67a08dc0-4677-423d-b962-f890c6d6b5a9 |
+
+---
+
+## Staging Deploy History
+
+| Date       | Repos                                        | Migrations Applied    | Notes                                           |
+|------------|----------------------------------------------|-----------------------|-------------------------------------------------|
+| 2026-03-15 | lexe-core, lexe-docs                         | 032-035 (core)        | Massimario multi-search, attachments, docs      |
+| 2026-03-13 | lexe-core, webchat, admin, infra, tools      | 030-031 (core)        | Sprint 9: Orch v2, multi-agent, citations       |
+| 2026-02-23 | All 7 repos                                  | 018-025 (core)        | First full prod deploy, admin panel, LLM bench  |
 
 ---
 
