@@ -43,7 +43,7 @@
 
 ---
 
-## Current Sprint: Sprint 10 — Pipeline v2 + Evidence Quality (2026-03-15)
+## Current Sprint: Sprint 10 — Pipeline v2 + TMB + Limits (2026-03-15/18)
 
 ### Pipeline v2 — Unified Legal Pipeline
 - [x] Binary routing: chat->toolloop, legal->LegalStrategy (was 4 strategies)
@@ -82,6 +82,32 @@
 - [x] Frontend: "Fonte interna" shown when no URL (already handled by CitationBadge)
 - [x] Confidence: url_tier=0 naturally reduces link_verification score (20% weight)
 - [x] **18/18 tests passing**
+
+### Tenant Management Board (2026-03-18)
+- [x] PLAN_PRESETS: free_demo, starter, professional (limits in tenant.settings JSONB)
+- [x] `POST /admin/tenants/provision` — saga: DB → Logto → Welcome email
+- [x] Slug policy: slugify + stopwords + auto-dedup (-2, -3), max 63 chars
+- [x] Welcome email: navy #0A1628 + cyan #06B6D4, temp password 72h warning
+- [x] Enhanced `GET /admin/tenants` — user_count, conv_today, plan, usage bars, is_over_limit
+- [x] Frontend: TenantProvisionDialog + ProvisionSuccessDialog + plan badges + usage bars
+- [x] i18n: 36 keys IT+EN for provision dialog, plans, usage
+
+### Limits Enforcement (2026-03-18)
+- [x] `limits_enforcement.py` — LimitsEnforcer (pre-check + post-accounting)
+- [x] max_users check (403) in `invite_user()`
+- [x] conv/day (429) in `create_customer_conversation()` + post-accounting
+- [x] tokens/day PRE (429, 5% margin) in `stream_to_orchestrator()`
+- [x] tokens/day POST — INCRBY actual tokens from done event (debt tolerated, warned)
+- [x] messages/conversation (429) in `stream_to_orchestrator()`
+- [x] Valkey cache: `lexe:limits:{tid}` TTL 5min, invalidated on PUT /admin/limits
+- [x] Prometheus: `lexe_limits_block_total{type}`, `lexe_tenant_provision_total{status}`
+- [x] HTTP semantics: 403 structural (users/personas), 429 temporal (conv/tokens/messages)
+
+### Infra Ops (2026-03-18)
+- [x] `docker-compose.override.prod.yml` — HMAC key env for lexe-core
+- [ ] A1: Generate HMAC key on prod server, restart lexe-core + lexe-memory
+- [ ] A2: Langfuse keys on prod (localhost:3005)
+- [ ] A3: Remove stale alias `qwen3-5-plus-02-15` from LiteLLM
 
 ### Document Attachments (2026-03-15)
 - [x] Upload pipeline: DOCX/PDF extraction, context injection into conversation
