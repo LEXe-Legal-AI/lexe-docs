@@ -103,11 +103,23 @@
 - [x] Prometheus: `lexe_limits_block_total{type}`, `lexe_tenant_provision_total{status}`
 - [x] HTTP semantics: 403 structural (users/personas), 429 temporal (conv/tokens/messages)
 
+### GDPR Compliance — Fase 2-3 Complete (2026-03-19)
+- [x] **Fase 2**: Admin consent audit export — `GET /admin/consent-audit` (JSON) + `GET /admin/consent-audit/export` (CSV)
+- [x] **Fase 3**: Terms v1 paid plan updated with full GDPR disclaimer (6247 chars, same as free plan)
+- [x] Both plans now include: AI disclaimer art. 1229 c.c., explicit no-training statement, DPO contact, 12-month retention
+- [x] All 4 GDPR phases now COMPLETE (informativa, prova consenso, disclaimer, diritti interessato)
+
+### Invite User Fix + UsersPage Enhancements (2026-03-19)
+- [x] Fix: `ApiClient.request()` throws plain object, not `Error` — catch block now casts to `{code?, message?}`
+- [x] Proper error messages: HTTP_403 → "limite utenti raggiunto", HTTP_409 → "email già registrata"
+- [x] UsersPage header: user count badge (`{usersTotal} utenti`) next to search bar
+- [x] Staging: `max_users` raised to 5 for tenant `67a08dc0...` + Valkey cache invalidated
+
 ### Infra Ops (2026-03-18)
 - [x] `docker-compose.override.prod.yml` — HMAC key env for lexe-core
-- [ ] A1: Generate HMAC key on prod server, restart lexe-core + lexe-memory
-- [ ] A2: Langfuse keys on prod (localhost:3005)
-- [ ] A3: Remove stale alias `qwen3-5-plus-02-15` from LiteLLM
+- [x] A1: HMAC key active on prod — lexe-core + lexe-memory share same key (verified 2026-03-19)
+- [x] A2: Langfuse — optional, graceful degradation if unconfigured, no action needed
+- [x] A3: `qwen3-5-plus-02-15` — dead code in benchmark files only, not in prod config
 
 ### Document Attachments (2026-03-15)
 - [x] Upload pipeline: DOCX/PDF extraction, context injection into conversation
@@ -447,6 +459,7 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 | JWT missing org_id → 401                | Fixed  | Sub-based fallback lookup in tenant_resolver.py + auto-heal org membership                                                    |
 | Low confidence when jurisprudence absent| Fixed  | Removed penalty — confidence = norm verification only, jurisprudence is informational enrichment                                |
 | Chat lost after crash in Logto mode     | Open   | Frontend Logto mode skips loading messages from server. Need GET /conversations/{id}/messages endpoint                         |
+| Invite user error message generic       | Fixed  | `ApiClient.request()` throws plain object not Error → `instanceof Error` false → fallback msg. Fix: cast to `{code?, message?}` |
 
 ---
 
@@ -517,10 +530,11 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 | Date       | Repos                                        | Migrations Applied    | Notes                                           |
 |------------|----------------------------------------------|-----------------------|-------------------------------------------------|
+| 2026-03-19 | lexe-webchat                                 | —                     | Invite user fix, UsersPage user count badge     |
 | 2026-03-15 | lexe-core, lexe-docs                         | 032-035 (core)        | Massimario multi-search, attachments, docs      |
 | 2026-03-13 | lexe-core, webchat, admin, infra, tools      | 030-031 (core)        | Sprint 9: Orch v2, multi-agent, citations       |
 | 2026-02-23 | All 7 repos                                  | 018-025 (core)        | First full prod deploy, admin panel, LLM bench  |
 
 ---
 
-*Ultimo aggiornamento: 2026-03-15*
+*Ultimo aggiornamento: 2026-03-19*
