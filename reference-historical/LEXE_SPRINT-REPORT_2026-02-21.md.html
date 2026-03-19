@@ -1,0 +1,429 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LEXe Sprint Report — Multi-Terminal Orchestration — 2026-02-21</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 9pt; line-height: 1.4; color: #1a1a2e;
+    background: #e0e0e0;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm; height: 297mm;
+    padding: 14mm 16mm 18mm 16mm;
+    margin: 4mm auto; background: #fff;
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,.15);
+  }
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; box-shadow: none; page-break-after: always; }
+    .page:last-child { page-break-after: avoid; }
+  }
+  .hdr {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 2.5px solid #0d47a1; padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .hdr-left h1 { font-size: 15pt; font-weight: 700; color: #0d47a1; }
+  .hdr-left .sub { font-size: 8pt; color: #546e7a; margin-top: 1px; }
+  .hdr-right { text-align: right; font-size: 7.5pt; color: #455a64; line-height: 1.45; }
+  .hdr-right .dt { font-weight: 700; color: #0d47a1; font-size: 8.5pt; }
+  .conf {
+    background: #b71c1c; color: #fff; text-align: center;
+    padding: 4px 0; font-size: 7pt; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .ftr {
+    position: absolute; bottom: 10mm; left: 16mm; right: 16mm;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1.5px solid #0d47a1; padding-top: 4px; font-size: 7pt; color: #546e7a;
+  }
+  .ftr-l { font-weight: 600; color: #0d47a1; }
+  .ftr-c { color: #b71c1c; font-weight: 700; letter-spacing: .8px; font-size: 6.5pt; }
+  .ftr-r { font-weight: 600; }
+  h2 {
+    font-size: 11pt; color: #0d47a1; font-weight: 700;
+    border-left: 3.5px solid #1565c0; padding-left: 8px; margin: 11px 0 6px 0;
+  }
+  h3 { font-size: 9.5pt; color: #1565c0; margin: 8px 0 4px 0; font-weight: 600; }
+  strong { color: #0d47a1; }
+  table { width: 100%; border-collapse: collapse; margin: 4px 0 8px 0; font-size: 8pt; }
+  thead th {
+    background: #0d47a1; color: #fff; padding: 4px 6px;
+    text-align: left; font-weight: 600; font-size: 7.5pt;
+    text-transform: uppercase; letter-spacing: .4px;
+  }
+  tbody td { padding: 3.5px 6px; border-bottom: 1px solid #e0e0e0; }
+  tbody tr:nth-child(even) { background: #f5f7fa; }
+  .b { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 6.5pt; font-weight: 700; }
+  .b-ok  { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .b-w   { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+  .b-err { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  .b-i   { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+  .b-n   { background: #f3e5f5; color: #6a1b9a; border: 1px solid #ce93d8; }
+  .bx { border-radius: 4px; padding: 6px 10px; margin: 5px 0; font-size: 8pt; }
+  .bx-b { background: #e3f2fd; border-left: 3px solid #1565c0; }
+  .bx-g { background: #e8f5e9; border-left: 3px solid #2e7d32; }
+  .bx-o { background: #fff3e0; border-left: 3px solid #e65100; }
+  .bx-r { background: #ffebee; border-left: 3px solid #c62828; }
+  .kpi { display: flex; gap: 8px; margin: 8px 0 10px 0; }
+  .kc {
+    flex: 1; background: #f5f7fa; border: 1px solid #e0e0e0;
+    border-top: 3px solid #1565c0; border-radius: 0 0 4px 4px;
+    padding: 7px 6px; text-align: center;
+  }
+  .kc.g { border-top-color: #2e7d32; } .kc.o { border-top-color: #e65100; }
+  .kc.p { border-top-color: #6a1b9a; } .kc.r { border-top-color: #c62828; }
+  .kv { font-size: 16pt; font-weight: 700; color: #0d47a1; line-height: 1; }
+  .kc.g .kv { color: #2e7d32; } .kc.o .kv { color: #e65100; }
+  .kc.p .kv { color: #6a1b9a; } .kc.r .kv { color: #c62828; }
+  .kl { font-size: 6.5pt; color: #78909c; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+  .hl { background: #e8f5e9 !important; }
+  .author-block {
+    text-align: center; margin-top: 14px; padding: 10px 14px;
+    background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 4px;
+  }
+  .author-block .label { font-size: 7pt; color: #78909c; text-transform: uppercase; letter-spacing: 1.5px; }
+  .author-block .name { font-size: 11pt; font-weight: 700; color: #0d47a1; margin: 3px 0; }
+  .author-block .org { font-size: 7pt; color: #78909c; }
+  .author-block .legal { font-size: 6.5pt; color: #b71c1c; font-weight: 600; margin-top: 4px; letter-spacing: .4px; }
+  .two-col { display: flex; gap: 10px; }
+  .two-col > div { flex: 1; }
+  .commit-list { font-size: 7pt; font-family: 'Cascadia Code', 'Consolas', monospace; line-height: 1.55; }
+  .commit-list .hash { color: #6a1b9a; font-weight: 700; }
+  .commit-list .tag { color: #0d47a1; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ PAGE 1 — OVERVIEW & KPIs ═══════════════════ -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe Sprint Report</h1>
+      <div class="sub">Multi-Terminal Orchestration &mdash; test-improvement branch</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 February 2026 &mdash; 17:45 CET</div>
+      <div>Ref: <strong>SPRINT-MTO-001</strong></div>
+      <div>Author: <strong>Francesco Trani</strong></div>
+    </div>
+  </div>
+  <div class="conf">&#9888; CONFIDENTIAL &mdash; Intellectual Property of Francesco Trani &mdash; Unauthorized distribution prohibited &#9888;</div>
+
+  <h2>Sprint Goal</h2>
+  <div class="bx bx-b">
+    Execute a parallel 5-terminal orchestration plan to improve LEXe pipeline quality, routing efficiency, tool resilience, and UI confidence feedback. All changes on branch <strong>test-improvement</strong>, deployed to staging, validated with automated + manual tests.
+  </div>
+
+  <h2>Key Performance Indicators</h2>
+  <div class="kpi">
+    <div class="kc g"><div class="kv">24</div><div class="kl">Commits</div></div>
+    <div class="kc"><div class="kv">5</div><div class="kl">Terminals</div></div>
+    <div class="kc g"><div class="kv">4</div><div class="kl">Repos Modified</div></div>
+    <div class="kc p"><div class="kv">3</div><div class="kl">Migrations</div></div>
+    <div class="kc o"><div class="kv">~15m</div><div class="kl">Execution Time</div></div>
+  </div>
+  <div class="kpi">
+    <div class="kc g"><div class="kv">19/20</div><div class="kl">Signals OK</div></div>
+    <div class="kc g"><div class="kv">100%</div><div class="kl">Staging Healthy</div></div>
+    <div class="kc"><div class="kv">200</div><div class="kl">Gold Set Queries</div></div>
+    <div class="kc g"><div class="kv">6</div><div class="kl">ADR Documented</div></div>
+  </div>
+
+  <h2>Terminal Ownership Matrix</h2>
+  <table>
+    <thead><tr><th>Terminal</th><th>Scope</th><th>Files</th><th>Commits</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><strong>T1</strong> Pipeline &amp; Routing</td><td>agent/, gateway/, config.py</td><td>8 files</td><td>5</td><td><span class="b b-ok">DONE</span></td></tr>
+      <tr><td><strong>T2</strong> Tools &amp; Resilience</td><td>tools/, utils/</td><td>6 files</td><td>5</td><td><span class="b b-ok">DONE</span></td></tr>
+      <tr><td><strong>T3</strong> UI/UX &amp; Prompts</td><td>webchat, admin, prompts/</td><td>10+ files</td><td>4</td><td><span class="b b-ok">DONE</span></td></tr>
+      <tr><td><strong>T4</strong> Data &amp; DB</td><td>migrations, infra, litellm</td><td>5 files</td><td>5</td><td><span class="b b-ok">DONE</span></td></tr>
+      <tr><td><strong>T5</strong> QA &amp; Documentation</td><td>tests/, lexe-docs/</td><td>14 files</td><td>7</td><td><span class="b b-ok">DONE</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Staging Deploy Status</h2>
+  <table>
+    <thead><tr><th>Container</th><th>Commit</th><th>Status</th><th>Uptime</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td><strong>lexe-core</strong></td><td><code>7d9f49c</code></td><td><span class="b b-ok">HEALTHY</span></td><td>Running</td></tr>
+      <tr class="hl"><td><strong>lexe-webchat</strong></td><td><code>55e78e2</code></td><td><span class="b b-ok">HEALTHY</span></td><td>Running</td></tr>
+      <tr class="hl"><td><strong>lexe-admin</strong></td><td><code>325213f</code></td><td><span class="b b-ok">HEALTHY</span></td><td>Running</td></tr>
+      <tr class="hl"><td><strong>lexe-litellm</strong></td><td><code>edf2cb3</code></td><td><span class="b b-ok">HEALTHY</span></td><td>Running</td></tr>
+    </tbody>
+  </table>
+
+  <div class="ftr">
+    <div class="ftr-l">LEXe Legal AI Platform</div>
+    <div class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</div>
+    <div class="ftr-r">Page 1 / 4</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 2 — COMPLETED WORK ═══════════════════ -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe Sprint Report</h1>
+      <div class="sub">Completed Work &mdash; All Phases</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 February 2026 &mdash; 17:45 CET</div>
+      <div>Ref: <strong>SPRINT-MTO-001</strong></div>
+      <div>Author: <strong>Francesco Trani</strong></div>
+    </div>
+  </div>
+  <div class="conf">&#9888; CONFIDENTIAL &mdash; Intellectual Property of Francesco Trani &mdash; Unauthorized distribution prohibited &#9888;</div>
+
+  <h2>Phase 1 &mdash; Foundation &amp; Stabilization</h2>
+  <table>
+    <thead><tr><th>Task</th><th>Terminal</th><th>Description</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>T4-F1-B</td><td>T4</td><td>Pre-operations backup (DB dump + LiteLLM config)</td><td>&mdash;</td></tr>
+      <tr><td>T4-F1-A</td><td>T4</td><td>Migration 018: lexe-fast max_tokens 250&rarr;1024</td><td><code>637fc6a</code></td></tr>
+      <tr><td>T2-F1-A</td><td>T2</td><td>Add tenacity dependency (>=8.2.0)</td><td><code>ac16aea</code></td></tr>
+      <tr><td>T2-F1-B</td><td>T2</td><td>Differentiated rate limiting (semaphores 6/4/3/4)</td><td><code>a13540a</code></td></tr>
+      <tr><td>T2-F1-C</td><td>T2</td><td>Tenacity exponential backoff (3 retries, 1-10s)</td><td><code>5543497</code></td></tr>
+      <tr><td>T2-F1-D</td><td>T2</td><td>Per-source circuit breaker (threshold=5, reset=60s)</td><td><code>99d40cb</code></td></tr>
+      <tr><td>T1-F1-B</td><td>T1</td><td>Enable ff_legis_agent by default (False&rarr;True)</td><td><code>6953ef2</code></td></tr>
+      <tr><td>T5-F1-A</td><td>T5</td><td>Baseline metrics capture script (50 queries async)</td><td><code>5e2b082</code></td></tr>
+      <tr><td>T5-F1-B</td><td>T5</td><td>Gold set 50 queries (realistic Italian legal)</td><td><code>17c6503</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Phase 2 &mdash; Unified Classifier &amp; Prompt v2</h2>
+  <table>
+    <thead><tr><th>Task</th><th>Terminal</th><th>Description</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>T5-F1-B+</td><td>T5</td><td>Gold set expanded to 200 queries (6 categories)</td><td><code>fe69d2d</code></td></tr>
+      <tr><td>T1-F2-A</td><td>T1</td><td>Fast-path heuristic: char length&rarr;word count &lt;8</td><td><code>3a6edf0</code></td></tr>
+      <tr><td>T1-F2-B+C</td><td>T1</td><td><strong>Eliminate double classifier</strong> &mdash; unified intent detector</td><td><code>cd8bf41</code></td></tr>
+      <tr><td>T3-F1-AB</td><td>T3</td><td>System prompt v2: citations, red flags, disclaimer</td><td><code>3c5fefe</code></td></tr>
+      <tr><td>T5-F2-A</td><td>T5</td><td>E2E staging test framework (14 test methods)</td><td><code>29d79b4</code></td></tr>
+      <tr><td>T2-F2-A</td><td>T2</td><td>json_safe.py: 3-level robust JSON parser</td><td><code>ac9f12f</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Phase 3 &mdash; Self-Correction &amp; Confidence</h2>
+  <table>
+    <thead><tr><th>Task</th><th>Terminal</th><th>Description</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>T4-F3-A</td><td>T4</td><td>Migration 019: 6 LEXORC agent role defaults</td><td><code>7c5af95</code></td></tr>
+      <tr><td>T1-F3-A</td><td>T1</td><td><strong>Self-correction verifier</strong> (2 retry, 15s timeout)</td><td><code>935258d</code></td></tr>
+      <tr><td>T3-F3-A</td><td>T3</td><td>Confidence badge inline (VERIFIED/CAUTION/LOW)</td><td><code>55e78e2</code></td></tr>
+      <tr><td>T4-F3-B</td><td>T4</td><td>LiteLLM alias cleanup (3 duplicates removed)</td><td><code>edf2cb3</code></td></tr>
+      <tr><td>T5-F3-A</td><td>T5</td><td>Locust load test (1000 queries/hour target)</td><td><code>9ea913d</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Phase 4 &mdash; Documentation &amp; Fixes</h2>
+  <table>
+    <thead><tr><th>Task</th><th>Terminal</th><th>Description</th><th>Commit</th></tr></thead>
+    <tbody>
+      <tr><td>T5-F4-A</td><td>T5</td><td>Knowledge Hub: 6 ADR + 2 Runbooks</td><td><code>fdd715a</code></td></tr>
+      <tr><td>FIX</td><td>&mdash;</td><td>json_safe integration into intent_detector.py</td><td><code>4fed8fd</code></td></tr>
+      <tr><td>FIX</td><td>&mdash;</td><td>Migration 020: cleanup 3 orphaned DB aliases</td><td><code>a0a4190</code></td></tr>
+      <tr><td>FIX</td><td>&mdash;</td><td>SLA Dashboard endpoint (GET /api/v1/admin/sla)</td><td><code>7d9f49c</code></td></tr>
+      <tr><td>FIX</td><td>&mdash;</td><td>Admin LEXORC roles UI + i18n (IT/EN)</td><td><code>325213f</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="ftr">
+    <div class="ftr-l">LEXe Legal AI Platform</div>
+    <div class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</div>
+    <div class="ftr-r">Page 2 / 4</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 3 — ARCHITECTURE & MODELS ═══════════════════ -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe Sprint Report</h1>
+      <div class="sub">Architecture Changes &amp; Model Configuration</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 February 2026 &mdash; 17:45 CET</div>
+      <div>Ref: <strong>SPRINT-MTO-001</strong></div>
+      <div>Author: <strong>Francesco Trani</strong></div>
+    </div>
+  </div>
+  <div class="conf">&#9888; CONFIDENTIAL &mdash; Intellectual Property of Francesco Trani &mdash; Unauthorized distribution prohibited &#9888;</div>
+
+  <h2>Routing Architecture &mdash; Before vs After</h2>
+  <div class="two-col">
+    <div>
+      <div class="bx bx-r">
+        <strong>BEFORE</strong> &mdash; Double Classifier<br>
+        1. classify_complexity() &rarr; LLM call #1 (~2.5s)<br>
+        2. run_intent_detector() &rarr; LLM call #2 (~1.5s)<br>
+        3. Pipeline re-detects intent internally<br>
+        <strong>Total: 3-4 LLM calls, 4-5s routing overhead</strong>
+      </div>
+    </div>
+    <div>
+      <div class="bx bx-g">
+        <strong>AFTER</strong> &mdash; Unified Flow<br>
+        1. Fast-path: word_count &lt; 8 &amp; no legal hints &rarr; toolloop (0ms)<br>
+        2. run_intent_detector() &rarr; single LLM call (~1.8s)<br>
+        3. IntentResult passed to pipeline (skip re-detection)<br>
+        <strong>Total: 1 LLM call, &lt;2s routing overhead</strong>
+      </div>
+    </div>
+  </div>
+
+  <h2>Self-Correction Verifier Loop</h2>
+  <div class="bx bx-b">
+    <strong>verify_with_self_correction()</strong> &mdash; Max 2 attempts, 15s timeout<br>
+    Attempt 1: run_verifier() &rarr; PASS = <span class="b b-ok">VERIFIED</span> | FAIL &rarr; retry_with_reflection()<br>
+    Attempt 2: run_verifier() &rarr; PASS = <span class="b b-ok">VERIFIED</span> | FAIL = <span class="b b-w">CAUTION</span> + disclaimer<br>
+    New model: <strong>VerificationResult</strong> (confidence_level: VERIFIED | CAUTION | LOW_CONFIDENCE)
+  </div>
+
+  <h2>Tool Executor Resilience Stack</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Pattern</th><th>Config</th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Semaphores</strong></td><td>official=6, certified=4, web=3</td><td>Concurrent call limiting per tool category</td></tr>
+      <tr><td>2</td><td><strong>Tenacity Retry</strong></td><td>3 attempts, exp backoff 1-10s</td><td>Retries on timeout, connect error, 502/503/504</td></tr>
+      <tr><td>3</td><td><strong>Circuit Breaker</strong></td><td>threshold=5, reset=60s</td><td>Opens after 5 consecutive failures per source</td></tr>
+      <tr><td>4</td><td><strong>JSON Safe Parser</strong></td><td>3 fallback levels</td><td>L1: json.loads &rarr; L2: strip fences &rarr; L3: regex</td></tr>
+    </tbody>
+  </table>
+
+  <h2>LiteLLM Model Configuration (Post-Cleanup)</h2>
+  <table>
+    <thead><tr><th>Alias</th><th>Backend Model</th><th>Role</th><th>Max Tokens</th></tr></thead>
+    <tbody>
+      <tr><td><strong>lexe-fast</strong></td><td>google/gemini-2.5-flash</td><td>Classification, follow-up, facts</td><td>1024</td></tr>
+      <tr><td><strong>lexe-primary</strong></td><td>mistralai/mistral-large-2512</td><td>Chat, synthesis, LEXORC agents</td><td>4096</td></tr>
+      <tr><td><strong>lexe-complex</strong></td><td>openai/gpt-5.2</td><td>Planning (reasoning)</td><td>2048</td></tr>
+      <tr><td><strong>legal-tier2-haiku</strong></td><td>anthropic/claude-haiku-4.5</td><td>Verification, audit</td><td>2048</td></tr>
+      <tr><td><strong>legal-tier3-sonnet</strong></td><td>anthropic/claude-sonnet-4.6</td><td>Frontier writing</td><td>&mdash;</td></tr>
+      <tr><td><strong>lexe-embedding</strong></td><td>openai/text-embedding-3-small</td><td>Embeddings (1536d)</td><td>&mdash;</td></tr>
+    </tbody>
+  </table>
+
+  <h2>LEXORC Agent Role Mapping (Migration 019)</h2>
+  <table>
+    <thead><tr><th>Role</th><th>Model</th><th>Purpose</th><th>Tenants</th></tr></thead>
+    <tbody>
+      <tr><td>lexorc_classifier</td><td>lexe-fast</td><td>Query complexity classification</td><td>2/2</td></tr>
+      <tr><td>lexorc_norm_agent</td><td>lexe-primary</td><td>Normative research (codes, articles)</td><td>2/2</td></tr>
+      <tr><td>lexorc_caselaw_agent</td><td>lexe-primary</td><td>Case law research (massime)</td><td>2/2</td></tr>
+      <tr><td>lexorc_doctrine_agent</td><td>lexe-primary</td><td>Doctrine research (annotations)</td><td>2/2</td></tr>
+      <tr><td>lexorc_auditor</td><td>legal-tier2-haiku</td><td>Coherence &amp; anti-hallucination</td><td>2/2</td></tr>
+      <tr><td>lexorc_synthesizer</td><td>lexe-primary</td><td>Final response synthesis</td><td>2/2</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Feature Flags &mdash; Staging</h2>
+  <div class="kpi">
+    <div class="kc g"><div class="kv" style="font-size:11pt">LEGIS_AGENT</div><div class="kl">TRUE (default)</div></div>
+    <div class="kc g"><div class="kv" style="font-size:11pt">LEXORC</div><div class="kl">TRUE</div></div>
+    <div class="kc"><div class="kv" style="font-size:11pt">MEMORY_V2</div><div class="kl">TRUE</div></div>
+    <div class="kc"><div class="kv" style="font-size:11pt">FACTS_LLM</div><div class="kl">TRUE</div></div>
+  </div>
+
+  <div class="ftr">
+    <div class="ftr-l">LEXe Legal AI Platform</div>
+    <div class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</div>
+    <div class="ftr-r">Page 3 / 4</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 4 — TESTING, ISSUES, NEXT STEPS ═══════════════════ -->
+<div class="page">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LEXe Sprint Report</h1>
+      <div class="sub">Testing, Open Issues &amp; Next Steps</div>
+    </div>
+    <div class="hdr-right">
+      <div class="dt">21 February 2026 &mdash; 17:45 CET</div>
+      <div>Ref: <strong>SPRINT-MTO-001</strong></div>
+      <div>Author: <strong>Francesco Trani</strong></div>
+    </div>
+  </div>
+  <div class="conf">&#9888; CONFIDENTIAL &mdash; Intellectual Property of Francesco Trani &mdash; Unauthorized distribution prohibited &#9888;</div>
+
+  <h2>Hardening Test Results (T3-F4)</h2>
+  <table>
+    <thead><tr><th>Test</th><th>Query</th><th>Route</th><th>Confidence</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>Legal Query</td><td>Art. 2043 c.c. presupposti</td><td>LEGIS</td><td><span class="b b-ok">VERIFIED</span> (100)</td><td><span class="b b-ok">PASS</span></td></tr>
+      <tr class="hl"><td>Generic Query</td><td>"Ciao, come stai?"</td><td>ToolLoop</td><td>No badge</td><td><span class="b b-ok">PASS</span></td></tr>
+      <tr><td>Red Flag</td><td>Cofideiussore mutuo rischi</td><td>LEGIS</td><td><span class="b b-w">34</span> (few sources)</td><td><span class="b b-w">PARTIAL</span></td></tr>
+      <tr class="hl"><td>Error Logs</td><td>Container logs 15min</td><td>&mdash;</td><td>&mdash;</td><td><span class="b b-ok">PASS</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Test Infrastructure Created</h2>
+  <table>
+    <thead><tr><th>Asset</th><th>File</th><th>Size</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Gold Set 50</td><td>tests/data/gold_set_50.json</td><td>14 KB</td><td>50 realistic queries with expected routing</td></tr>
+      <tr><td>Gold Set 200</td><td>tests/data/gold_set_200.json</td><td>50 KB</td><td>200 queries, 6 categories, full metadata</td></tr>
+      <tr><td>E2E Suite</td><td>tests/e2e/test_staging_suite.py</td><td>19 KB</td><td>14 test methods, &ge;80% accuracy threshold</td></tr>
+      <tr><td>Load Test</td><td>tests/load/locustfile.py</td><td>9 KB</td><td>Locust: 1000 q/h, 3:1 legal/generic ratio</td></tr>
+      <tr><td>Baseline</td><td>tests/capture_baseline.py</td><td>13 KB</td><td>50-query async metrics capture</td></tr>
+      <tr><td>SLA Endpoint</td><td>gateway/sla_router.py</td><td>&mdash;</td><td>GET /api/v1/admin/sla (real-time metrics)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Architecture Decision Records (ADR)</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Decision</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td><span class="b b-i">D1</span></td><td>Unified classifier</td><td>Eliminate 2.5s double-classifier latency</td></tr>
+      <tr><td><span class="b b-i">D2</span></td><td>Differentiated semaphores</td><td>Prevent tool source overload (6/4/3)</td></tr>
+      <tr><td><span class="b b-i">D3</span></td><td>LEXORC roles via DB</td><td>Per-tenant model customization</td></tr>
+      <tr><td><span class="b b-i">D4</span></td><td>ff_legis_agent default true</td><td>Legal pipeline as primary routing</td></tr>
+      <tr><td><span class="b b-i">D5</span></td><td>3-level confidence spectrum</td><td>VERIFIED / CAUTION / LOW_CONFIDENCE</td></tr>
+      <tr><td><span class="b b-i">D6</span></td><td>Self-correction max 2 retry</td><td>Balance quality vs latency (15s cap)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Open Issues</h2>
+  <table>
+    <thead><tr><th>Severity</th><th>Issue</th><th>Impact</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><span class="b b-w">MEDIUM</span></td><td>Planner quality: cofideiussione query uses generic search</td><td>Low confidence (34) on complex legal topics</td><td>Improve planner prompt with red-flag article mapping</td></tr>
+      <tr><td><span class="b b-w">LOW</span></td><td>core.evidence_packs table missing</td><td>Evidence persistence fails silently</td><td>Create migration for evidence_packs table</td></tr>
+      <tr><td><span class="b b-i">INFO</span></td><td>SLA dashboard counters in-memory</td><td>Reset on container restart</td><td>Consider Valkey persistence in future sprint</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Next Steps</h2>
+  <table>
+    <thead><tr><th>Priority</th><th>Action</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td><span class="b b-err">P0</span></td><td>Manual testing on stage-chat.lexe.pro (broader query set)</td><td>Frisco</td></tr>
+      <tr><td><span class="b b-err">P0</span></td><td>Run E2E gold set suite + load test on staging</td><td>Automated</td></tr>
+      <tr><td><span class="b b-w">P1</span></td><td>Merge test-improvement &rarr; stage &rarr; deploy production</td><td>Frisco</td></tr>
+      <tr><td><span class="b b-w">P1</span></td><td>Wire SLA record_query() into customer_router</td><td>T1/T5</td></tr>
+      <tr><td><span class="b b-i">P2</span></td><td>Improve planner red-flag article mapping</td><td>T1</td></tr>
+      <tr><td><span class="b b-i">P2</span></td><td>Create core.evidence_packs migration</td><td>T4</td></tr>
+    </tbody>
+  </table>
+
+  <div class="author-block">
+    <div class="label">Document Author</div>
+    <div class="name">Francesco Trani</div>
+    <div class="org">LEXe Legal AI &mdash; La legge a portata di AI</div>
+    <div class="legal">All content is intellectual property of the author. Reproduction prohibited without authorization.</div>
+  </div>
+
+  <div class="ftr">
+    <div class="ftr-l">LEXe Legal AI Platform</div>
+    <div class="ftr-c">CONFIDENTIAL &mdash; &copy; Francesco Trani 2026</div>
+    <div class="ftr-r">Page 4 / 4</div>
+  </div>
+</div>
+
+</body>
+</html>
