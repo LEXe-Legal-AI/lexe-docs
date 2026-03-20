@@ -54,15 +54,21 @@
 - [x] 10 unit tests (dedup, max_calls, failure handling, constitutional presumption)
 - [x] Deployed to staging + prod, FF enabled on both
 
-### Evaluation API Fix (lexe-webchat)
+### Evaluation API Fix (lexe-webchat + lexe-core)
 - [x] Removed obsolete `isLogtoEnabled()` guard in `handleEvaluate` — evaluations were silently dropped
 - [x] `getApiClient()` already supports Logto tokens via `logtoTokenProvider.ts`
 - [x] Star ratings now correctly sent to backend in Logto mode
+- [x] **Root cause 2**: `UUID(customer.sub)` → `ValueError` — Logto sub is short alphanumeric, not UUID
+- [x] Fix: `_sub_to_uuid()` in `evaluation_router.py` — deterministic uuid5 from Logto sub
+- [x] Added `logger.info` on submit entry/exit for observability
+- [x] Webchat: `.then(console.info)` + `.catch(console.warn)` for fire-and-forget debugging
 
-### Bench Runner — Architectural Issue Identified
+### Bench Runner — Architectural Issue + Button Fixes
 - [x] Current bench runner tests **individual LLM models in isolation** (single prompt, no tools, no KB)
 - [x] Should test **full LEXE pipeline** end-to-end (multiple models in different roles + tools + KB + scoring)
-- [ ] Refactor: pipeline benchmark via `POST /customer/chat` with ground-truth evaluation
+- [x] **Cancel button fix**: added `mapVariables` to cancel mutation in `TestRunnerTab` and `BenchmarkRunnerTab` — without it, `:id` path param stayed as template literal → 404
+- [x] **Error messages**: catch blocks now use `e.details ?? e.message` (AdminApiError shape has `details`, not just `message`)
+- [ ] Deploy: pipeline benchmark needs migration 042 + `docker compose build` for lexe-core/admin/webchat
 
 ### Production Deploy (2026-03-20)
 - [x] All 8 repos merged stage → main and aligned
@@ -513,8 +519,9 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 | Low confidence when jurisprudence absent| Fixed  | Removed penalty — confidence = norm verification only, jurisprudence is informational enrichment                                |
 | Chat lost after crash in Logto mode     | Open   | Frontend Logto mode skips loading messages from server. Need GET /conversations/{id}/messages endpoint                         |
 | Invite user error message generic       | Fixed  | `ApiClient.request()` throws plain object not Error → `instanceof Error` false → fallback msg. Fix: cast to `{code?, message?}` |
-| Evaluations dropped in Logto mode       | Fixed  | `isLogtoEnabled()` guard in `handleEvaluate` was obsolete — `getApiClient()` already supports Logto tokens. Guard removed.      |
+| Evaluations dropped in Logto mode       | Fixed  | Two bugs: (1) `isLogtoEnabled()` guard removed, (2) `UUID(customer.sub)` crashed — Logto sub is alphanumeric, fixed with `uuid5`. |
 | Norms unverified after KB retrieval     | Fixed  | New `ff_legacy_vigenza_verifier` — Phase V0 verifies norms via Normattiva API before LLM verifier. Constitutional norms whitelisted. |
+| Bench cancel button 404                 | Fixed  | `useAdminMutation` missing `mapVariables` — `:id` path param not expanded. Added in TestRunnerTab + BenchmarkRunnerTab.           |
 | Bench runner tests models not pipeline  | Open   | LexBench-IT tests individual LLM models in isolation, should test full pipeline E2E with ground-truth evaluation                 |
 
 ---

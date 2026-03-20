@@ -40,6 +40,7 @@ last_verified: 2026-03-19
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [FEATURES.md](public/FEATURES.md) | Platform features: multi-agent research, confidence, citations, tools | Customers |
+| [PLATFORM-OVERVIEW.md](public/PLATFORM-OVERVIEW.md) | End-to-end platform narrative: AI-first UX, architecture, differentiation | Marketing / Sales |
 | [BENCHMARK-SUMMARY.md](public/BENCHMARK-SUMMARY.md) | G-Eval benchmark: 11 models, 5 dimensions, marketing-safe claims | Marketing |
 | [TECHNOLOGY.md](public/TECHNOLOGY.md) | Tech stack overview (no secrets) | Partners |
 | [API-OVERVIEW.md](public/API-OVERVIEW.md) | Customer-facing API reference (chat, conversations, memory) | Developers |
