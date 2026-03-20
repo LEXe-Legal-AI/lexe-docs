@@ -43,7 +43,37 @@
 
 ---
 
-## Current Sprint: Sprint 10 — Pipeline v2 + TMB + Limits (2026-03-15/18)
+## Current Sprint: Sprint 11 — Vigenza Verifier + Evaluation Fix (2026-03-20)
+
+### Legacy Vigenza Verifier (`ff_legacy_vigenza_verifier`)
+- [x] New FF: post-research Normattiva API verification in legacy pipeline (Phase V0, before LLM verifier)
+- [x] `agent/vigenza_verifier.py`: parallel API calls (`Semaphore(3)`), dedup by `(act_type, article)`, global timeout 15s
+- [x] Anti-flicker SSE: `verifying_vigenza` phase only if ≥3 unverified norms
+- [x] Constitutional presumption whitelist: `costituzione`, `cedu`, `tfue`, `tue`, `trattato ue/ce/cee`, `carta dei diritti fondamentali` → `verified=true, confidence=1.0, source=constitutional_presumption` (zero API calls)
+- [x] Works in both legacy and orch v2 (unified_pipeline delegates to legis_agent_pipeline)
+- [x] 10 unit tests (dedup, max_calls, failure handling, constitutional presumption)
+- [x] Deployed to staging + prod, FF enabled on both
+
+### Evaluation API Fix (lexe-webchat)
+- [x] Removed obsolete `isLogtoEnabled()` guard in `handleEvaluate` — evaluations were silently dropped
+- [x] `getApiClient()` already supports Logto tokens via `logtoTokenProvider.ts`
+- [x] Star ratings now correctly sent to backend in Logto mode
+
+### Bench Runner — Architectural Issue Identified
+- [x] Current bench runner tests **individual LLM models in isolation** (single prompt, no tools, no KB)
+- [x] Should test **full LEXE pipeline** end-to-end (multiple models in different roles + tools + KB + scoring)
+- [ ] Refactor: pipeline benchmark via `POST /customer/chat` with ground-truth evaluation
+
+### Production Deploy (2026-03-20)
+- [x] All 8 repos merged stage → main and aligned
+- [x] Migration 040 applied on prod (bench_runs, kpi_snapshots, human_annotations)
+- [x] lexe-core rebuilt with `--build` (vigenza verifier + constitutional whitelist)
+- [x] lexe-webchat rebuilt (evaluation API fix)
+- [x] 12 containers healthy on prod
+
+---
+
+## Previous Sprint: Sprint 10 — Pipeline v2 + TMB + Limits + Insights (2026-03-15/20)
 
 ### Pipeline v2 — Unified Legal Pipeline
 - [x] Binary routing: chat->toolloop, legal->LegalStrategy (was 4 strategies)
@@ -114,6 +144,29 @@
 - [x] Proper error messages: HTTP_403 → "limite utenti raggiunto", HTTP_409 → "email già registrata"
 - [x] UsersPage header: user count badge (`{usersTotal} utenti`) next to search bar
 - [x] Staging: `max_users` raised to 5 for tenant `67a08dc0...` + Valkey cache invalidated
+
+### Dashboard Insights Panel (2026-03-20)
+- [x] `GET /admin/dashboard/insights?period=7d|30d|90d` — evaluation + confidence analytics
+- [x] Evaluation insights: total, avg rating, distribution (1-5), daily trend, low_rating (<=2) count/pct
+- [x] Confidence bands: VERIFIED (>=60), CAUTION (45-59), LOW_CONFIDENCE (<45) — counts, pcts, daily trend
+- [x] Per-pipeline confidence breakdown (actual_pipeline from turn_envelopes)
+- [x] Alerts table: merge low-rating evals + LOW_CONFIDENCE envelopes, attributed to tenant + user (top 50)
+- [x] Top performers table: rating >= 4 (top 10)
+- [x] Frontend: `InsightsPanel.tsx` in DashboardPage — 6 StatCards, StackedBar, LineChart (recharts), AreaChart, alerts/performers tables
+- [x] Deployed to production 2026-03-20
+
+### Pipeline E2E Benchmark (2026-03-20)
+- [x] `pipeline_bench_runner.py` — core: `capture_pipeline_snapshot()`, `execute_pipeline_for_item()`, `run_pipeline_benchmark()`
+- [x] Orchestrator.run(TurnContext) direttamente — ZERO persistenza conversazionale (BENCH_CONTACT_UUID, uuid4 per item)
+- [x] Dual-score: Quality (7 dimensioni LexBench, per-area breakdown) + Operational (latency, tool_failure_rate, evidence_count, strategy_distribution)
+- [x] Regression tracking: confronto vs ultimo run compatibile, warning se snapshot_hash diverso
+- [x] `benchmark_runner.py` — `pipeline_benchmark` + `legal_bench` alias → pipeline_bench_runner
+- [x] `GET /admin/bench/pipeline-snapshot` — frozen config (model roles, FF, strategies, snapshot_hash)
+- [x] Migration 042: `pipeline_benchmark` aggiunto a bench_runs run_type CHECK constraint
+- [x] `BenchmarkRunnerTab.tsx` — riscritto: snapshot card con model roles + FF badges, mode selector, dual-score con regression delta, history con Q/O scores
+- [x] `LegalBenchTab.tsx` — wired a `pipeline_benchmark`, rimosso input modelli, risultati dual-score
+- [x] `useBenchSSE.ts` — tipi estesi: PipelineQualityScore, PipelineOperationalScore, PipelineSnapshot, RegressionInfo
+- [x] `admin-registry.ts` — `bench.pipelineSnapshot` endpoint
 
 ### Infra Ops (2026-03-18)
 - [x] `docker-compose.override.prod.yml` — HMAC key env for lexe-core
@@ -309,7 +362,7 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults, attachments | Multi-tenant con RLS, migrations 001-035 |
+| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults, attachments, turn_envelopes, bench_runs, kpi_snapshots, human_annotations | Multi-tenant con RLS, migrations 001-040 |
 | `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking, semantic_vectors_v2 | pgvector 1536d, RLS 8 tabelle |
 
 ### lexe-max (KB Legal)
@@ -460,6 +513,9 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 | Low confidence when jurisprudence absent| Fixed  | Removed penalty — confidence = norm verification only, jurisprudence is informational enrichment                                |
 | Chat lost after crash in Logto mode     | Open   | Frontend Logto mode skips loading messages from server. Need GET /conversations/{id}/messages endpoint                         |
 | Invite user error message generic       | Fixed  | `ApiClient.request()` throws plain object not Error → `instanceof Error` false → fallback msg. Fix: cast to `{code?, message?}` |
+| Evaluations dropped in Logto mode       | Fixed  | `isLogtoEnabled()` guard in `handleEvaluate` was obsolete — `getApiClient()` already supports Logto tokens. Guard removed.      |
+| Norms unverified after KB retrieval     | Fixed  | New `ff_legacy_vigenza_verifier` — Phase V0 verifies norms via Normattiva API before LLM verifier. Constitutional norms whitelisted. |
+| Bench runner tests models not pipeline  | Open   | LexBench-IT tests individual LLM models in isolation, should test full pipeline E2E with ground-truth evaluation                 |
 
 ---
 
@@ -530,6 +586,8 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 | Date       | Repos                                        | Migrations Applied    | Notes                                           |
 |------------|----------------------------------------------|-----------------------|-------------------------------------------------|
+| 2026-03-20 | All 8 repos (stage=main aligned)             | 040 (core, prod only) | Sprint 11: vigenza verifier, eval fix, bench runner, constitutional whitelist |
+| 2026-03-20 | lexe-core, lexe-admin                        | —                     | Dashboard insights panel (eval + confidence)    |
 | 2026-03-19 | lexe-webchat                                 | —                     | Invite user fix, UsersPage user count badge     |
 | 2026-03-15 | lexe-core, lexe-docs                         | 032-035 (core)        | Massimario multi-search, attachments, docs      |
 | 2026-03-13 | lexe-core, webchat, admin, infra, tools      | 030-031 (core)        | Sprint 9: Orch v2, multi-agent, citations       |
@@ -537,4 +595,4 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 ---
 
-*Ultimo aggiornamento: 2026-03-19*
+*Ultimo aggiornamento: 2026-03-20*
