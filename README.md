@@ -30,7 +30,7 @@ last_verified: 2026-03-19
 | [OBSERVABILITY.md](internal/OBSERVABILITY.md) | Prometheus (72 rules), Grafana, Jaeger, Loki, Langfuse, EventSink | Source of Truth |
 | [TENANT-MODEL.md](internal/TENANT-MODEL.md) | Multitenancy: plans, limits, provisioning, RBAC, FF per-tenant | Source of Truth |
 | [CONFIDENCE-PIPELINE.md](internal/CONFIDENCE-PIPELINE.md) | Scoring formula, 3-band thresholds, authority weights, verification | Source of Truth |
-| [DECISION-LOG.md](internal/DECISION-LOG.md) | 12 architecture decisions (ADR D1-D6 + Sprint 9-10 decisions) | Source of Truth |
+| [DECISION-LOG.md](internal/DECISION-LOG.md) | 14 architecture decisions (ADR D1-D6 + Sprint 9-12 decisions) | Source of Truth |
 | [SYSTEM-BOUNDARIES.md](internal/SYSTEM-BOUNDARIES.md) | 24 systems: owned vs external, trust levels, SLA dependencies | Source of Truth |
 | [DATA-FLOWS-GDPR.md](internal/DATA-FLOWS-GDPR.md) | GDPR data flows, retention, consent, Art. 15-21, pseudonymization | Source of Truth |
 | [ADJUDICATION-RESULTS.md](internal/ADJUDICATION-RESULTS.md) | Doc reorg analysis: accuracy matrix, conflicts resolved, claims review | Reference |
@@ -57,8 +57,9 @@ last_verified: 2026-03-19
 | [gdpr-consent-system.md](gdpr-consent-system.md) | GDPR consent system (4 phases) | Source of Truth |
 | [orchestration-v2-test-report.md](orchestration-v2-test-report.md) | V2 test report, FF per-tenant | Source of Truth |
 | [DEPLOY-STAGE.md](DEPLOY-STAGE.md) | Staging deploy workflow | Active |
-| [tenant-cleanup.md](tenant-cleanup.md) | Tenant deletion procedure | Active |
+| [tenant-cleanup.md](tenant-cleanup.md) | Tenant deletion procedure (now includes hard delete) | Active |
 | [system-prompts/lexe-legal-assistant-CURRENT.md](system-prompts/lexe-legal-assistant-CURRENT.md) | Active system prompt v2.1 | Source of Truth |
+| [gdpr-consent-system.md](gdpr-consent-system.md) | GDPR consent: terms, acceptance, legal proof (migration 043) | Source of Truth |
 
 ### ADR & Knowhow
 
@@ -121,4 +122,4 @@ See [RUNBOOK-V2.md](internal/RUNBOOK-V2.md) for complete procedures.
 
 ---
 
-*Last updated: 2026-03-19 — Documentation Reorg (Fase Lancio)*
+*Last updated: 2026-03-21 — Sprint 12 (The Shield, Overlay UI, Admin Hardening)*
