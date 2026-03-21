@@ -4,7 +4,7 @@
 
 ---
 
-## Infrastructure Status (2026-03-15)
+## Infrastructure Status (2026-03-21)
 
 ### Production (49.12.85.92)
 
@@ -43,7 +43,72 @@
 
 ---
 
-## Current Sprint: Sprint 11 — Vigenza Verifier + Evaluation Fix (2026-03-20)
+## Current Sprint: Sprint 13 — AEGIS 2.0 Pipeline Fix (2026-03-21)
+
+### AEGIS 2.0 — 19 Bug Fix across 13 files (+568/-37 lines)
+- [x] **WS0**: `citation_extractor.py` — robust regex extraction (GLiNER-ready), LLM cross-check
+- [x] **WS1**: Fix A1 (race condition URL/scoring), A2 (link_verification KB floor), A5 (vacuous truth gate), A6 (classify_authority sez. L/F/T/P)
+- [x] **WS2**: `run_mandatory_verification()` v2 — zero regex, uses CitationExtractor + LLM verify
+- [x] **WS3**: FONTI section in 5 missing templates, anti-leak identity removed from 14 templates, `_ANTI_URL_WARNING` in synthesizer
+- [x] **WS4**: key_norms fallback via CitationExtractor (B1), kb_search in DIRECT (B2), scenario level override for 6 safety-critical scenarios (C1)
+- [x] **WS5**: Evidence gate pre-synthesis (C2), lightweight verifier for SIMPLE, self-correction for all legal levels (C3), `ff_mandatory_verifier_always`
+- [x] **WS6**: `CODE_TO_URN` mapping 15 codes (B3), whitespace normalization norm_gate (C4), researcher coverage check (B4)
+- [x] **WS7**: `security.py` — leakage detection, ingress guard, anomaly logging, wired into pipeline
+- [x] Kryptonite regression dataset generated from 284 audit traces
+- [ ] Staging deploy + regression test
+
+---
+
+## Previous Sprint: Sprint 12 — The Shield + Overlay UI + Admin Hardening (2026-03-20/21)
+
+### The Shield — Norm Assurance System (lexe-core)
+- [x] `act_type` parser: structured extraction from lex_search titles
+- [x] LLM-based norm identity resolver (Phase NR) — resolves ambiguous norm references
+- [x] Norm gate + normativa quality floor for legal pipeline
+- [x] Evidence auditor integration
+
+### Profile & Admin as Modal Overlays (lexe-webchat)
+- [x] `OverlayPanel.tsx`: reusable modal shell (glassmorphism, tabs, Escape/backdrop close, framer-motion)
+- [x] `ProfileOverlay.tsx`: Profile + Privacy tabs as overlay on top of chat
+- [x] `AdminOverlay.tsx`: Users + Settings tabs with admin guard + user count badge
+- [x] `configStore.ts`: `activeOverlay` state + `openOverlay()`/`closeOverlay()` (not persisted)
+- [x] `UserMenu.tsx`: `navigate()` → `openOverlay()` (uses `getState()` pattern)
+- [x] Removed `/profile` and `/admin` routes from `main.tsx`
+- [x] Chat context preserved — user no longer loses conversation
+
+### Admin Panel Hardening (lexe-admin)
+- [x] Sidebar redesign: navy background, cyan accents, i18n keys, group headers
+- [x] Hard delete user endpoint: `DELETE /workflow/users/{user_id}` with deep cleanup
+- [x] Hard delete tenant: `HardDeleteTenantDialog` with retype-name triple confirmation
+- [x] Hard delete user UI: triple confirmation (retype name)
+- [x] Email tracking: send log, resend, preview + responsive fixes
+- [x] Email log page in sidebar
+- [x] Build version badge in sidebar
+- [x] Users endpoint paths fixed: `/admin/users` → `/admin/workflow/users`
+- [x] Superadmin sees all routes
+
+### Consent Fix (Production)
+- [x] **Root cause**: Migration 043 (`consent_legal_proof`) not applied on prod
+- [x] Missing: `content_hash` on `consent_terms`, `consent_acceptance_log` table, `vessatorie_accepted` on `user_consents`
+- [x] `POST /consent/accept` was returning 500 — asyncpg query for non-existent column
+- [x] Migration 043 applied, consent acceptance now working
+
+### Production DB Alignment (2026-03-21)
+- [x] Schema diff: staging vs prod — identified and fixed all mismatches
+- [x] Added `webhook_endpoints.tenant_id` + FK (was staging-only)
+- [x] Created 6 missing indexes (contacts, conversations, responder_personas, tenants)
+- [x] Deduped 3 duplicate contacts from race condition + created unique index `uq_contacts_tenant_external`
+- [x] Residual: `super_tool_runs` table (prod-only legacy, harmless)
+
+### Production Deploy (2026-03-21)
+- [x] lexe-webchat rebuilt `--no-cache` (overlay UI)
+- [x] Migration 043 applied on prod
+- [x] 6 new tenants provisioned (Salvetti, WeDo, Tecnic Office, Massaini&Bonetti, Lamer, MDV OUTLET)
+- [x] All containers healthy
+
+---
+
+## Previous Sprint: Sprint 11 — Vigenza Verifier + Evaluation Fix (2026-03-20)
 
 ### Legacy Vigenza Verifier (`ff_legacy_vigenza_verifier`)
 - [x] New FF: post-research Normattiva API verification in legacy pipeline (Phase V0, before LLM verifier)
@@ -68,7 +133,16 @@
 - [x] Should test **full LEXE pipeline** end-to-end (multiple models in different roles + tools + KB + scoring)
 - [x] **Cancel button fix**: added `mapVariables` to cancel mutation in `TestRunnerTab` and `BenchmarkRunnerTab` — without it, `:id` path param stayed as template literal → 404
 - [x] **Error messages**: catch blocks now use `e.details ?? e.message` (AdminApiError shape has `details`, not just `message`)
-- [ ] Deploy: pipeline benchmark needs migration 042 + `docker compose build` for lexe-core/admin/webchat
+
+### Dashboard Insights Panel (2026-03-20)
+- [x] `GET /admin/dashboard/insights?period=7d|30d|90d` — evaluation + confidence analytics
+- [x] Evaluation insights: total, avg rating, distribution (1-5), daily trend, low_rating (<=2) count/pct
+- [x] Confidence bands: VERIFIED (>=60), CAUTION (45-59), LOW_CONFIDENCE (<45) — counts, pcts, daily trend
+- [x] Per-pipeline confidence breakdown (actual_pipeline from turn_envelopes)
+- [x] Alerts table: merge low-rating evals + LOW_CONFIDENCE envelopes, attributed to tenant + user (top 50)
+- [x] Top performers table: rating >= 4 (top 10)
+- [x] Frontend: `InsightsPanel.tsx` in DashboardPage — 6 StatCards, StackedBar, LineChart (recharts), AreaChart, alerts/performers tables
+- [x] Deployed to production 2026-03-20
 
 ### Production Deploy (2026-03-20)
 - [x] All 8 repos merged stage → main and aligned
@@ -267,15 +341,14 @@ All 6 primary model aliases now point to **Gemini 3 Flash Preview**:
 - [x] Logto OIDC working on auth.lexe.pro, new app `lexe-admin-spa`
 - [x] DNS: admin.lexe.pro configured
 
-### KB Stats (Production)
+### KB Stats (Production, post-recovery 2026-03-19)
 
 | Metric                 | Count   |
 |------------------------|---------|
-| Articles (normativa)   | 13,397  |
-| Chunks + embeddings    | 17,343  |
-| Massime                | 46,767  |
-| Codici                 | 95      |
-| Norms (shared)         | 4,128   |
+| Articles (normativa)   | 10,154  |
+| Chunks + embeddings    | 41,256  |
+| Massime                | 38,718  |
+| Codici                 | 69 (49 with chunks) |
 | Graph edges (CITES)    | 58,737  |
 
 ---
@@ -368,7 +441,7 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 
 | Schema   | Tabelle                                                                                                                                                                                                                                                                                                                                                                                                                                            | Note                 |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, super_tool_runs, model_groups, model_role_defaults, attachments, turn_envelopes, bench_runs, kpi_snapshots, human_annotations | Multi-tenant con RLS, migrations 001-040 |
+| `core`   | tenants, contacts, conversations, conversation_messages, conversation_events, message_evaluations, responder_personas, users, roles, permissions, role_permissions, tools, tenant_feature_flags, contact_groups, contact_group_members, contact_merges, channel_accounts, channel_policies, channel_routings, group_routings, service_conversations, verified_identifiers, pending_verifications, webhook_endpoints, audit_log, tenant_llm_models, email_verification_tokens, token_sessions, lexorc_sessions, model_role_defaults, attachments, turn_envelopes, bench_runs, kpi_snapshots, human_annotations, consent_terms, user_consents, consent_acceptance_log, experiments, evidence_packs, llm_model_catalog, llm_sync_log, tool_catalog, tool_effectiveness, tool_execution_logs, legis_usage_patterns, persona_catalog, verification_logs | Multi-tenant con RLS, migrations 001-043 |
 | `memory` | memories, semantic_vectors, episodic_vectors, working_memories, audit_log, profiles, profile_facts, fact_history, delta_tracking, semantic_vectors_v2 | pgvector 1536d, RLS 8 tabelle |
 
 ### lexe-max (KB Legal)
@@ -484,24 +557,14 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 
 ---
 
-## In Progress
-
-### Pipeline v2 Staging Validation
-- [x] Deploy pipeline v2 changes to staging (ff_orchestration_v2 enabled globally)
-- [ ] E2E test: MINIMAL/STANDARD/DEEP depth routing
-- [ ] E2E test: NDA_TRIAGE, COMPLIANCE_CHECK, RISK_ASSESSMENT scenarios
-- [x] Validate authority scoring with real massime (massimario multi-format search deployed)
-
-### Evidence URL Persistence (Planned)
-- [ ] Migration: add `source_url TEXT` to `kb.massime` and `kb.sentenza`
-- [ ] LLM-validated URL write-back to KB (resolve → HTTP HEAD → LLM verify → persist)
-- [ ] Read-first: skip SearXNG if KB already has source_url
-- [ ] Same flow for giurisprudenza (case_law)
+## In Progress / Pending
 
 ### Pending Items
-- [ ] Chat persistence in Logto mode
-- [ ] Admin panel: degradation policy config UI
-- [ ] Admin panel: ApiHealthPage, AuditPage, Command Palette
+- [ ] Chat persistence in Logto mode (conversations lost on page reload)
+- [ ] Pipeline benchmark: deploy migration 042 + rebuild lexe-core/admin
+- [ ] Evidence URL persistence: add `source_url` to KB, skip SearXNG if cached
+- [ ] Admin panel: degradation policy config UI, ApiHealthPage, AuditPage
+- [ ] KB: re-ingest 26 missing work codes + 3 IPZS massimari (batch 11)
 
 ---
 
@@ -523,6 +586,9 @@ See [agentic-workflow.md](agentic-workflow.md) for the full agentic architecture
 | Norms unverified after KB retrieval     | Fixed  | New `ff_legacy_vigenza_verifier` — Phase V0 verifies norms via Normattiva API before LLM verifier. Constitutional norms whitelisted. |
 | Bench cancel button 404                 | Fixed  | `useAdminMutation` missing `mapVariables` — `:id` path param not expanded. Added in TestRunnerTab + BenchmarkRunnerTab.           |
 | Bench runner tests models not pipeline  | Open   | LexBench-IT tests individual LLM models in isolation, should test full pipeline E2E with ground-truth evaluation                 |
+| Consent accept 500 on production        | Fixed  | Migration 043 (`consent_legal_proof`) not applied on prod — `content_hash` column missing → asyncpg crash. Applied 2026-03-21   |
+| Duplicate contacts race condition       | Fixed  | 3 duplicate contacts from concurrent Logto webhook. Deduped + added UNIQUE index `uq_contacts_tenant_external`. 2026-03-21      |
+| Docker build cache stale deploy         | Fixed  | `docker compose build` used cached layers → deployed old code. Rule: ALWAYS use `--no-cache` for frontend builds                |
 
 ---
 
@@ -593,6 +659,7 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 | Date       | Repos                                        | Migrations Applied    | Notes                                           |
 |------------|----------------------------------------------|-----------------------|-------------------------------------------------|
+| 2026-03-21 | lexe-webchat, lexe-core, lexe-admin          | 043 (core, prod)      | Sprint 12: overlay UI, The Shield, admin hardening, consent fix, DB alignment |
 | 2026-03-20 | All 8 repos (stage=main aligned)             | 040 (core, prod only) | Sprint 11: vigenza verifier, eval fix, bench runner, constitutional whitelist |
 | 2026-03-20 | lexe-core, lexe-admin                        | —                     | Dashboard insights panel (eval + confidence)    |
 | 2026-03-19 | lexe-webchat                                 | —                     | Invite user fix, UsersPage user count badge     |
@@ -602,4 +669,4 @@ Browser -> stage-chat.lexe.pro -> Logto (auth.stage.lexe.pro)
 
 ---
 
-*Ultimo aggiornamento: 2026-03-20*
+*Ultimo aggiornamento: 2026-03-21*
