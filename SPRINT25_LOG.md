@@ -192,8 +192,19 @@ BEFORE the done yield.
 ---
 
 ## Approval Gates
-- [ ] Fase 1 stable on staging
-- [ ] Fase 2 stable on staging
-- [ ] Fase 3 stable on staging
-- [ ] Fase 4 stable on staging
-- [ ] Manual approval for `stage → main` merge + prod deploy
+- [x] Fase 1 stable on staging (bench v7 PASS)
+- [x] Fase 2+3 stable on staging (bench v8 PASS, repair 8/16)
+- [x] Fase 4 stable on staging (bench v9 PASS, latency -13%)
+- [x] Manual approval for `stage → main` merge + prod deploy
+- [x] **PROD DEPLOY COMPLETE 2026-04-15 ~21:35 UTC**
+
+## Prod release
+- Tag: `sprint25-release-20260415` (lexe-core, lexe-webchat)
+- Containers up: lexe-core + lexe-webchat (49.12.85.92)
+- Health: api.lexe.pro/health = 200, ai.lexe.pro = 200
+- **Smoke prod 5BDEX6DS**: conf 85 VERIFIED, latency 38.6s, event order
+  `legis_verify → legis_claim_audit → done` ✅, verification_penalty
+  present (mult 1.0, no penalty atteso), repair skipped (no fabricated).
+- Monitor 10min: no exceptions, no quality_alert errors.
+
+## Sprint 25 — DONE
