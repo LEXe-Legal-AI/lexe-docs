@@ -91,15 +91,40 @@ After retrying EU-F-002, TRI-ANA-101, VIG-ANA-003 transient failures:
 
 ---
 
-## Fase 2 — Proportional Verification Penalty + Quality Alerts
+## Fase 2+3 — Proportional Penalty + Quality Alerts + Scoped Repair
 
-_TBD_
+**Batched deploy.** Phase 3 repair_loop is dormant on 0-fabricated
+runs; shipping with Phase 2 avoids a second staging deploy and gives
+repair infrastructure room to activate once the first fabricated-
+caselaw cases land.
 
----
+### Commits
+| repo | SHA | message |
+|---|---|---|
+| lexe-core | `e3e5e24` | feat(sprint25-f2-f3): proportional penalty + quality alerts + scoped repair |
+| lexe-docs | `135e902` | docs(sprint25): log Fase 0-1 outcomes + gate PASS degraded |
 
-## Fase 3 — Active Scoped Repair Loop
+Safety tags: `pre-sprint25-fase2` (lexe-core).
 
-_TBD_
+### Deploy
+- `git pull` + `docker compose build --no-cache lexe-core` + `up -d` ✅
+- Health: `/health` 200 ✅
+
+### Bench16 v8 — 2026-04-15 16:27-16:41 UTC (834s)
+- **Avg confidence**: **78.9** (vs v7 83.2, **-4.3** → penalty active) ✅ plan target 73-78 range
+- **Avg latency**: **52.1s** (vs v7 49.4s, +5.5%) ✅ < +15%
+- Audit event emitted: 12/16 (75%) — 2 post-repair audit timeouts (audit task cancelled when repair re-synth took longer than the 6s tail budget)
+- Audit-before-done: 12/16
+- **Repair event: 8/16 (50%)** — above plan's 25-30% expectation but consistent with worst16 having 18 total fabricated_caselaw findings
+- Errors: 0/16 ✅
+- Total fabricated (pre-repair): tracked in items
+- ⚠️ **quality_alerts rows: 0** — known fire-and-forget bug in async generator (task cancelled when stream closes). Fix lands in Phase 4.
+
+### Gate outcome: **PASS**
+- Proportional penalty: **working** (conf drops -4 to -9 pt on items with fabricated_caselaw, e.g. KRY-F-048 90→81, KRY-F-023 83→77)
+- Repair loop: **active** (8/16 items triggered, all event-ordered correctly)
+- Badge-verifier discordance: **resolved** (confidence now reflects findings severity instead of masking them behind a hard cap)
+- **Known deferred**: quality_alerts task persistence (Phase 4 fix), post-repair audit re-kick (Sprint 26 enhancement)
 
 ---
 
